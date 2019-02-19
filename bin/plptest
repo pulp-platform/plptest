@@ -72,6 +72,8 @@ parser = argparse.ArgumentParser(description='Run a testset',epilog=commandHelp,
 parser.add_argument('command', metavar='CMD', type=str, nargs='*',
                    help='a command to be executed (see the command help afterwards)')
 
+parser.add_argument("--config", dest="config_name", default=None, help="specify the system configuration name")
+
 parser.add_argument("--config-def", dest="configDef", action="append", default=None, help="Specifies json files containing configurations definition")
 parser.add_argument("--testset", dest="testset", default=os.getcwd() + '/testset.cfg', metavar="PATH", help="Path to the testset. Default: %(default)s")
 parser.add_argument("--gui", dest="gui", action="store_true", help="Opens user interface")
@@ -117,8 +119,13 @@ runner = TestRunner(
 )
 runner.addTestset(args.testset)
 
-for config in plpconf.get_configs_from_env():
+if args.config_name is None:
+  for config in plpconf.get_configs_from_env():
+    runner.addConfig(config)
+else:
+  config = plpconf.get_config_from_tag(args.config_name)
   runner.addConfig(config)
+
 
 
 if args.gui:
