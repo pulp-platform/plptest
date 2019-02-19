@@ -39,4 +39,4 @@ $(foreach file, $(INSTALL_FILES), $(eval $(call declareInstallFile,$(file))))
 
 $(foreach file, $(PY_INSTALL_FILES), $(eval $(call declarePyInstallFile,$(file))))
 
-build: $(INSTALL_DIR)/bin/plptest_checker
+build: $(INSTALL_DIR)/bin/plptest_checker $(INSTALL_HEADERS) $(PY_INSTALL_HEADERS)
