@@ -305,7 +305,10 @@ class TestRun(protocol.ProcessProtocol):
         if self.closed:
             return True
 
-        os.killpg(self.pid, signal.SIGKILL)
+        try:
+            os.killpg(self.pid, signal.SIGKILL)
+        except:
+            pass
 
     def handleEnd(self):
         self.closed = True
