@@ -420,8 +420,12 @@ class TestRun(protocol.ProcessProtocol):
 
         elif type(cmd) == p.Check:
             self.appendOutput('Executing checker\n')
-            self.status, checker_output = cmd.checker(self.config, self.log, *cmd.kargs, **cmd.kwargs)
-            if checker_output: self.appendOutput(checker_output)
+            try:
+                self.status, checker_output = cmd.checker(self.config, self.log, *cmd.kargs, **cmd.kwargs)
+                if checker_output: self.appendOutput(checker_output)
+            except Exception as e:
+                self.appendOutput(str(e))
+                self.status = False
             if not self.status:
                 self.appendOutput('Checker returned wrong status\n')
             self.handle_cmd_end()
