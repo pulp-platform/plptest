@@ -305,10 +305,7 @@ class TestRun(protocol.ProcessProtocol):
         if self.closed:
             return True
 
-        try:
-            os.killpg(self.pid, signal.SIGKILL)
-        except:
-            pass
+        os.killpg(self.pid, signal.SIGKILL)
 
     def handleEnd(self):
         self.closed = True
@@ -341,6 +338,7 @@ class TestRun(protocol.ProcessProtocol):
         self.handle_cmd_end()
 
     def reachedTimeout(self):
+
         if not self.closed:
             self.appendOutput('Reached timeout of %s seconds\n' %
                               self.timeout)
@@ -360,6 +358,10 @@ class TestRun(protocol.ProcessProtocol):
         return timeout
 
     def runCommand(self):
+
+        if self.timeout_call_id is not None:
+            self.timeout_call_id.cancel()
+
         cmd = self.commands.pop(0)
 
         if type(cmd) == p.Shell:
@@ -381,7 +383,7 @@ class TestRun(protocol.ProcessProtocol):
 
                 self.timeout = timeout
 
-                self.reactor.callLater(timeout, self.reachedTimeout)
+                self.timeout_call_id = self.reactor.callLater(timeout, self.reachedTimeout)
                 self.appendOutput("Using timeout: %s seconds\n" % timeout)
 #           if args.stdoutDump: logfile = sys.stdout
 #           if envFile != None: cmd = '. %s && %s' % (envFile, cmd)
@@ -434,5 +436,7 @@ class TestRun(protocol.ProcessProtocol):
 
         self.appendOutput('Running: ' + self.test.getFullName() + ' / ' +
                           self.config.get_config_name() + '\n')
+
+        self.timeout_call_id = None
 
         self.runCommand()
