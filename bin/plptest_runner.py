@@ -294,6 +294,7 @@ class TestRunner(object):
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None):
         self.nb_runs = 0
+        self.tests = []
         self.server = server
         self.pendings = []
         self.runnings = []
@@ -332,9 +333,9 @@ class TestRunner(object):
 
     def addTestset(self, testset):
         if testset.find('.ini') != -1:
-            self.tests = IniParser(self, testset).parse()
+            self.tests += IniParser(self, testset).parse()
         else:
-            self.tests = CfgParser(self, testset).parse()
+            self.tests += CfgParser(self, testset).parse()
 
         for test in self.tests:
             len = test.getMaxTestNameLen()
