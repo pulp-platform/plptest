@@ -52,7 +52,8 @@ def run(tests):
   return 0
 
 def show(tests):
-  tests.show()
+  for testset in tests:
+    testset.show()
   return 0
 
 commands = {
