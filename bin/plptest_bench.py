@@ -2,6 +2,22 @@ import csv
 import io
 import os
 
+class Jenkins_plot(object):
+
+  def __init__(self, filename):
+    self.results = {}
+    self.filename = filename
+
+  def append(self, name, value):
+    self.results[name] = value
+
+  def gen(self):
+    with open(self.filename, "w") as csv_file:
+      csv_file.write('"%s"\n' % ', '.join(self.results.keys()))
+      csv_file.write('%s\n' % ', '.join(self.results.values()))
+
+
+
 class Bench(object):
 
   def __init__(self):
