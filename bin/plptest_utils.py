@@ -397,11 +397,13 @@ class TestRun(protocol.ProcessProtocol):
             testEnv['PLPTEST_NAME'] = self.test.getFullName()
             testEnv['PLPTEST_CONFIG'] = self.config.get_name()
 
-            install_dir = os.environ.get('INSTALL_DIR')
+            install_dir = self.runner.home
             if install_dir is None:
                 install_dir = os.environ.get('PULP_SDK_HOME') + \
                 '/install/ws'
-            cmd_exec = install_dir + '/bin/plptest_checker'
+                cmd_exec = install_dir + '/bin/plptest_checker'
+            else:
+                cmd_exec = install_dir + '/plptest_checker'
 
             cmd_args = [cmd_exec] + shlex.split(cmd)
 

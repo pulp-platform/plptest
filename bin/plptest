@@ -115,7 +115,7 @@ if len(args.command) == 0 and not args.gui:
 
 runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, maxOutputLen=args.maxOutputLen,
-    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db
+    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, home=os.path.dirname(os.path.realpath(__file__))
 )
 runner.addTestset(args.testset)
 
