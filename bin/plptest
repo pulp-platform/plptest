@@ -52,7 +52,8 @@ def run(tests):
   return 0
 
 def show(tests):
-  tests.show()
+  for testset in tests:
+    testset.show()
   return 0
 
 commands = {
@@ -75,7 +76,7 @@ parser.add_argument('command', metavar='CMD', type=str, nargs='*',
 parser.add_argument("--config", dest="config_name", default=None, help="specify the system configuration name")
 
 parser.add_argument("--config-def", dest="configDef", action="append", default=None, help="Specifies json files containing configurations definition")
-parser.add_argument("--testset", dest="testset", default=os.getcwd() + '/testset.cfg', metavar="PATH", help="Path to the testset. Default: %(default)s")
+parser.add_argument("--testset", dest="testset", action="append", default=None, metavar="PATH", help="Path to the testset. Default: %(default)s")
 parser.add_argument("--gui", dest="gui", action="store_true", help="Opens user interface")
 parser.add_argument("--threads", dest="threads", default=8, type=int, help="Specify the number of worker threads")
 parser.add_argument("--stdout", dest="stdout", action="store_true", help="Dumps test output to stdout")
@@ -88,6 +89,8 @@ parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Spe
 
 args = parser.parse_args()
 
+if args.testset is None:
+  args.testset = [os.getcwd() + '/testset.cfg']
 
 reportPath = os.getcwd()
 
@@ -117,7 +120,8 @@ runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, home=os.path.dirname(os.path.realpath(__file__))
 )
-runner.addTestset(args.testset)
+for testset in args.testset:
+  runner.addTestset(testset)
 
 if args.config_name is None:
   for config in plpconf.get_configs_from_env():
