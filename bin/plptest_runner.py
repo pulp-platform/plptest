@@ -292,7 +292,7 @@ class TestRunner(object):
     def __init__(
         self, nbThreads=1, server=True, stdout=False, 
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
-        db=False, pobjs=None, build=None):
+        db=False, pobjs=None, build=None, safe_stdout=False):
         self.nb_runs = 0
         self.tests = []
         self.server = server
@@ -300,6 +300,7 @@ class TestRunner(object):
         self.runnings = []
         self.nbThreads = nbThreads
         self.stdout = stdout
+        self.safe_stdout = safe_stdout
         self.maxOutputLen = maxOutputLen
         self.configs = []
         self.plpobjects = pobjs

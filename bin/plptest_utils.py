@@ -272,6 +272,9 @@ class TestRun(protocol.ProcessProtocol):
         if self.reachedMaxOutputSize:
             return
 
+        if self.runner.stdout and not self.runner.safe_stdout:
+            print (data, end = '')
+
         dataLen = len(data)
 
         if self.runner.maxOutputLen == -1 or \
@@ -315,7 +318,7 @@ class TestRun(protocol.ProcessProtocol):
             (duration.microseconds +
                 (duration.seconds + duration.days * 24 * 3600) * 10**6) / 10**6
 
-        if self.runner.stdout:
+        if self.runner.safe_stdout:
             print (self.log)
 
         if self.callback is not None:

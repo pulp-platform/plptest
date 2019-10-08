@@ -80,6 +80,7 @@ parser.add_argument("--testset", dest="testset", action="append", default=None, 
 parser.add_argument("--gui", dest="gui", action="store_true", help="Opens user interface")
 parser.add_argument("--threads", dest="threads", default=8, type=int, help="Specify the number of worker threads")
 parser.add_argument("--stdout", dest="stdout", action="store_true", help="Dumps test output to stdout")
+parser.add_argument("--safe-stdout", dest="safe_stdout", action="store_true", help="Dumps test output to stdout once the test is done")
 parser.add_argument("--max-output-len", dest="maxOutputLen", type=int, default=1024*1024, help="Maximum length of a test output. Default: %(default)s bytes")
 parser.add_argument("--test", dest="testList", default=None, action="append", help="Specify a test to be run")
 parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Sets maximum timeout allowed for a test")
@@ -117,7 +118,7 @@ if len(args.command) == 0 and not args.gui:
   args.command.append('run')
 
 runner = TestRunner(
-    nbThreads=args.threads, stdout=args.stdout, maxOutputLen=args.maxOutputLen,
+    nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db
 )
 for testset in args.testset:
