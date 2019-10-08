@@ -292,7 +292,7 @@ class TestRunner(object):
     def __init__(
         self, nbThreads=1, server=True, stdout=False, 
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
-        db=False, pobjs=None, build=None, safe_stdout=False):
+        db=False, pobjs=None, build=None, safe_stdout=False, home=None):
         self.nb_runs = 0
         self.tests = []
         self.server = server
@@ -311,6 +311,7 @@ class TestRunner(object):
         self.maxTimeout = maxTimeout
         self.worker_pool = None
         self.build = build
+        self.home = home
         if worker_pool == 'condor':
             self.worker_pool = plptest_condor.Condor_pool()
 
