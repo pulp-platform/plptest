@@ -402,9 +402,13 @@ class TestRun(protocol.ProcessProtocol):
 
             install_dir = self.runner.home
             if install_dir is None:
-                install_dir = os.environ.get('PULP_SDK_HOME') + \
-                '/install/ws'
-                cmd_exec = install_dir + '/bin/plptest_checker'
+                install_dir = os.environ.get('GAP_SDK_HOME')
+                if install_dir is not None:
+                    cmd_exec = install_dir + '/install/workstation/bin/plptest_checker'
+                else:
+                    install_dir = os.environ.get('PULP_SDK_HOME') + \
+                    '/install/ws'
+                    cmd_exec = install_dir + '/bin/plptest_checker'
             else:
                 cmd_exec = install_dir + '/plptest_checker'
 
