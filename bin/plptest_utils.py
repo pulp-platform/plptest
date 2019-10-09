@@ -273,7 +273,7 @@ class TestRun(protocol.ProcessProtocol):
             return
 
         if self.runner.stdout and not self.runner.safe_stdout:
-            print (data, end = '')
+            print (data, end = '', flush=True)
 
         dataLen = len(data)
 
@@ -284,8 +284,11 @@ class TestRun(protocol.ProcessProtocol):
         else:
             self.log += data[0:self.runner.maxOutputLen - self.outputLen]
             self.outputLen = self.runner.maxOutputLen
-            self.log += '\nReached maximum test output length of %s bytes\n' %\
+            msg = '\nReached maximum test output length of %s bytes\n' %\
                 self.runner.maxOutputLen
+            if self.runner.stdout and not self.runner.safe_stdout:
+                print (msg)
+                self.log += msg
             self.reachedMaxOutputSize = True
             self.close(kill=True)
 

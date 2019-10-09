@@ -31,6 +31,7 @@ from plptest_utils import *
 import plpobjects
 import imp
 import plptest_condor
+import psutil
 
 class bcolors:
     HEADER = '\033[95m'
@@ -290,9 +291,9 @@ class UiServer(protocol.Factory):
 class TestRunner(object):
 
     def __init__(
-        self, nbThreads=1, server=True, stdout=False, 
+        self, nbThreads=1, server=False, stdout=False, 
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
-        db=False, pobjs=None, build=None, safe_stdout=False, home=None):
+        db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None):
         self.nb_runs = 0
         self.tests = []
         self.server = server
@@ -312,6 +313,11 @@ class TestRunner(object):
         self.worker_pool = None
         self.build = build
         self.home = home
+        self.average_load = None
+
+        if average_load is not None:
+          self.average_load = average_load * 100
+
         if worker_pool == 'condor':
             self.worker_pool = plptest_condor.Condor_pool()
 
@@ -362,6 +368,8 @@ class TestRunner(object):
       if self.server:
         self.uiServer = UiServer(self.configs, self.tests)
         endpoints.serverFromString(reactor, "tcp:38497").listen(self.uiServer)
+      else:
+        self.uiServer = None
 
       if callback != None:
         reactor.callWhenRunning(callback, *args, **kwargs)
@@ -371,6 +379,11 @@ class TestRunner(object):
         self.close_runner()
       else:
         reactor.addSystemEventTrigger('after', 'shutdown', self.close_runner)
+
+    def check_pending_tests(self):
+      if len(self.pendings) > 0 and self.check_cpu_load():
+        testrun = self.pendings.pop()
+        self.run(testrun)
 
     def testEnd(self, testrun):
 
@@ -387,37 +400,54 @@ class TestRunner(object):
 
       runResult = TestRunResult(testrun.test.getFullName(), testrun.config, testrun.status, testrun.log)
 
-      if self.uiServer.handler != None:
+      if self.uiServer is not None and self.uiServer.handler is not None:
         self.uiServer.handler.transport.write(pickle.dumps(runResult))
 
-      if len(self.pendings) > 0:
-        testrun = self.pendings.pop()
-        self.run(testrun)
+      self.check_pending_tests()
 
       self.check_completion()
 
     def check_completion(self):
       if self.runCompletionCallback != None and len(self.pendings) == 0 and len(self.runnings) == 0:
+        self.cpu_load_checker_call_id.cancel()
         self.runCompletionCallback(*self.runCompletionArgs, **self.runCompletionKwargs)
 
     def run(self, testrun):
       self.runnings.append(testrun)
 
-      if self.uiServer.handler != None:
+      if self.uiServer is not None and self.uiServer.handler is not None:
         self.uiServer.handler.transport.write(pickle.dumps(TestRunning(testrun.test.getFullName(), testrun.config)))
       
       print (bcolors.OKBLUE + 'START'.ljust(6) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
 
       testrun.run(reactor, self.testEnd, testrun)
 
-    def enqueueTestRun(self, testrun):
+    def check_cpu_load(self):
       if len(self.runnings) >= self.nbThreads:
+        return False
+
+      if self.average_load is None:
+        return True
+
+      load = psutil.cpu_percent(interval=0.1)
+      return load < self.average_load
+
+    def enqueueTestRun(self, testrun):
+      if not self.check_cpu_load():
         self.pendings.append(testrun)
         return
 
       self.run(testrun)
 
+    def cpu_load_check(self):
+      self.cpu_load_checker_call_id = reactor.callLater(1, self.cpu_load_check)
+
+      self.check_pending_tests()
+
+
     def runTests(self, tests, callback=None, *args, **kwargs):
+
+      self.cpu_load_checker_call_id = reactor.callLater(1, self.cpu_load_check)
 
       self.runCompletionCallback = callback
       self.runCompletionArgs = args

@@ -23,6 +23,7 @@ import argparse
 import os
 import logging
 import pulp_config as plpconf
+import psutil
 
 # In case gtk3 is not available just skip gui
 try:
@@ -78,7 +79,8 @@ parser.add_argument("--config", dest="config_name", default=None, help="specify 
 parser.add_argument("--config-def", dest="configDef", action="append", default=None, help="Specifies json files containing configurations definition")
 parser.add_argument("--testset", dest="testset", action="append", default=None, metavar="PATH", help="Path to the testset. Default: %(default)s")
 parser.add_argument("--gui", dest="gui", action="store_true", help="Opens user interface")
-parser.add_argument("--threads", dest="threads", default=8, type=int, help="Specify the number of worker threads")
+parser.add_argument("--threads", dest="threads", default=None, type=int, help="Specify the number of worker threads")
+parser.add_argument("--load-average", dest="load_average", default=0.9, type=float, help="Specify the system average load that this tool should try to respect, from 0 to 1")
 parser.add_argument("--stdout", dest="stdout", action="store_true", help="Dumps test output to stdout")
 parser.add_argument("--safe-stdout", dest="safe_stdout", action="store_true", help="Dumps test output to stdout once the test is done")
 parser.add_argument("--max-output-len", dest="maxOutputLen", type=int, default=1024*1024, help="Maximum length of a test output. Default: %(default)s bytes")
@@ -92,6 +94,9 @@ args = parser.parse_args()
 
 if args.testset is None:
   args.testset = [os.getcwd() + '/testset.cfg']
+
+if args.threads is None:
+  args.threads = psutil.cpu_count(logical=True)
 
 reportPath = os.getcwd()
 
@@ -119,7 +124,7 @@ if len(args.command) == 0 and not args.gui:
 
 runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
-    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db
+    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average
 )
 for testset in args.testset:
   runner.addTestset(testset)
