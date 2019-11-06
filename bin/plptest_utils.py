@@ -382,6 +382,10 @@ class TestRun(protocol.ProcessProtocol):
 
             cmd = cmd.cmd % cmdDict
 
+            post_cmd_args = os.environ.get('PLPTEST_POST_CMD_ARGS')
+            if post_cmd_args is not None:
+                cmd += post_cmd_args
+
             if self.test.timeout != -1:
                 timeout = int(self.timeoutToTime(self.test.timeout)) * 2
                 if self.runner.maxTimeout != -1:
