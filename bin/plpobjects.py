@@ -357,7 +357,7 @@ class Test(object):
 
         for run in self.runs:
 
-            testFile.write('  <testcase classname="%s" name="%s" time="%f">\n' % (test_prefix + ':' + name, run.config, run.duration))
+            testFile.write('  <testcase classname="%s" name="%s" time="%f">\n' % (run.config, test_prefix + ':' + name, run.duration))
             if run.success:
                 testFile.write('    <success/>\n')
             else:
