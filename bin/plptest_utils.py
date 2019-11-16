@@ -22,6 +22,7 @@ from twisted.internet import protocol
 import signal
 import shlex
 import plptest as p
+import re
 
 class Command(object):
 
@@ -320,6 +321,14 @@ class TestRun(protocol.ProcessProtocol):
         self.duration = \
             (duration.microseconds +
                 (duration.seconds + duration.days * 24 * 3600) * 10**6) / 10**6
+
+        if self.runner.bench_csv_file is not None:
+            pattern = re.compile(self.runner.bench_regexp)
+            for line in self.log.splitlines():
+                bench = pattern.match(line)
+                if bench is not None:
+                    key, value = bench.group(1).split('=')
+                    self.runner.bench_csv_file[key] = value
 
         if self.runner.safe_stdout:
             print (self.log)

@@ -293,7 +293,8 @@ class TestRunner(object):
     def __init__(
         self, nbThreads=1, server=False, stdout=False, 
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
-        db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None):
+        db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
+        bench_csv_file=None, bench_regexp=None):
         self.nb_runs = 0
         self.tests = []
         self.server = server
@@ -314,6 +315,8 @@ class TestRunner(object):
         self.build = build
         self.home = home
         self.average_load = None
+        self.bench_regexp = bench_regexp
+        self.bench_csv_file = bench_csv_file
 
         if average_load is not None:
           self.average_load = average_load * 100

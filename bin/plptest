@@ -24,6 +24,8 @@ import os
 import logging
 import pulp_config as plpconf
 import psutil
+import csv
+import collections
 
 # In case gtk3 is not available just skip gui
 try:
@@ -88,6 +90,8 @@ parser.add_argument("--test", dest="testList", default=None, action="append", he
 parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Sets maximum timeout allowed for a test")
 parser.add_argument("--db", dest="db", action='store_true', default=False, help="Activate Pulp database access")
 parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Specify worker pool")
+parser.add_argument("--bench-csv-file", dest="bench_csv_file", default=None, help="Specify CSV file for benchmark results")
+parser.add_argument("--bench-regexp", dest="bench_regexp", default='@BENCH@(\S+)@', help="Specify regexp for extracting benchmark results")
 
 
 args = parser.parse_args()
@@ -99,6 +103,15 @@ if args.threads is None:
   args.threads = psutil.cpu_count(logical=True)
 
 reportPath = os.getcwd()
+
+bench_csv_file = None
+if args.bench_csv_file is not None:
+  bench_csv_file = collections.OrderedDict()
+  if os.path.exists(args.bench_csv_file):
+    with open(args.bench_csv_file, 'r') as file:
+      csv_reader = csv.reader(file)
+      for row in csv_reader:
+        bench_csv_file[row[0]] = row[1]
 
 
 def command_handle():
@@ -124,7 +137,7 @@ if len(args.command) == 0 and not args.gui:
 
 runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
-    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average
+    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average, bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp
 )
 for testset in args.testset:
   runner.addTestset(testset)
@@ -144,3 +157,8 @@ if args.gui:
 else:
   runner.start(command_handle)
 
+if bench_csv_file is not None:
+  with open(args.bench_csv_file, 'w') as file:
+    csv_writer = csv.writer(file)
+    for key, value in bench_csv_file.items():
+      csv_writer.writerow([key, value])
