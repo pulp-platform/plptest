@@ -94,6 +94,8 @@ class CfgParser(object):
         top_testset.append(testset.struct)
 
         testset.struct.set_restrict(testset.restrict)
+        testset.struct.set_parallel(testset.parallel)
+
 
         for file in testset.files:
           if file.find('.ini') != -1:
@@ -118,6 +120,7 @@ class CfgParser(object):
         if test.parent != None: parent = test.struct
         else: parent = topParent
 
+        logging.debug("Adding test (name: %s)" % (test.name))
         test.struct = Test(self.runner, test.name, self.path, parent)
         top_testset.append(test.struct)
 
@@ -405,6 +408,8 @@ class TestRunner(object):
 
       if self.uiServer is not None and self.uiServer.handler is not None:
         self.uiServer.handler.transport.write(pickle.dumps(runResult))
+
+      testrun.check_deps()
 
       self.check_pending_tests()
 

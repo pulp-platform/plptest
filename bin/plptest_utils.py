@@ -183,9 +183,16 @@ class Testset(TestCommon):
         if parent is not None:
             parent.regChild(self)
         self.childs = []
+        self.parallel = True
+
+    def set_parallel(self, parallel):
+        self.parallel = parallel
 
     def regChild(self, child):
         self.childs.append(child)
+
+    def add_dep(self, child, config):
+        child.run(config)
 
     def show(self):
         for child in self.childs:
@@ -194,8 +201,19 @@ class Testset(TestCommon):
     def run(self, config):
         if not self.isActiveForConfig(config):
             return
-        for child in self.childs:
-            child.run(config)
+
+        if self.parallel:
+            for child in self.childs:
+                child.run(config)
+        else:
+            if len(self.childs) > 0:
+                prev_child = self.childs[0]
+                prev_child.run(config)
+
+                for child in self.childs[1:]:
+                    prev_child.add_dep(child, config)
+                    prev_child = child
+
 
 
 class Test(TestCommon):
@@ -209,6 +227,7 @@ class Test(TestCommon):
         self.timeout = -1
         self.checkers = []
         self.params = []
+        self.deps = []
 
         if parent is not None:
             parent.regChild(self)
@@ -219,14 +238,25 @@ class Test(TestCommon):
             path = os.path.join(path, self.dir)
         return path
 
+    def add_dep(self, child, config):
+        testrun = child.get_testrun(config)
+        if testrun is not None:
+            self.deps.append(testrun)
+
     def show(self):
         print (self.name)
 
-    def run(self, config):
+    def get_testrun(self, config):
         if not self.isActiveForConfig(config):
             return
-        testrun = TestRun(self.runner, self, config)
-        self.runner.enqueueTestRun(testrun)
+        return TestRun(self.runner, self, config)
+
+    def check_deps(self):
+        for dep in self.deps:
+            self.runner.enqueueTestRun(dep)
+
+    def run(self, config):
+        self.runner.enqueueTestRun(self.get_testrun(config))
 
     def addCommand(self, command):
         self.commands.append(command)
@@ -268,6 +298,9 @@ class TestRun(protocol.ProcessProtocol):
         self.reachedMaxOutputSize = False
         self.closed = False
         self.id = runner.get_test_id()
+
+    def check_deps(self):
+        self.test.check_deps()
 
     def appendOutput(self, data):
         if self.reachedMaxOutputSize:

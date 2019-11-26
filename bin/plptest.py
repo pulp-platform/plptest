@@ -18,13 +18,14 @@
 
 class Testset(object):
 
-  def __init__(self, name, files=[], parent=None, restrict=None, tags=[], description=None):
+  def __init__(self, name, files=[], parent=None, restrict=None, tags=[], description=None, parallel=True):
     self.name = name
     self.files = files
     self.parent = parent
     self.restrict = restrict
     self.tags = tags
     self.description = description
+    self.parallel = parallel
 
 
 
