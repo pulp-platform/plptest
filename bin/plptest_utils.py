@@ -248,7 +248,7 @@ class Test(TestCommon):
 
     def get_testrun(self, config):
         if not self.isActiveForConfig(config):
-            return
+            return None
         return TestRun(self.runner, self, config)
 
     def check_deps(self):
@@ -256,7 +256,9 @@ class Test(TestCommon):
             self.runner.enqueueTestRun(dep)
 
     def run(self, config):
-        self.runner.enqueueTestRun(self.get_testrun(config))
+        testrun = self.get_testrun(config)
+        if testrun is not None:
+            self.runner.enqueueTestRun(testrun)
 
     def addCommand(self, command):
         self.commands.append(command)
