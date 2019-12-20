@@ -412,6 +412,11 @@ class TestRun(protocol.ProcessProtocol):
         if self.timeout_call_id is not None:
             self.timeout_call_id.cancel()
 
+        if len(self.commands) == 0:
+            self.status = True
+            self.handle_cmd_end()
+            return
+
         cmd = self.commands.pop(0)
 
         if type(cmd) == p.Shell:
@@ -442,6 +447,12 @@ class TestRun(protocol.ProcessProtocol):
 #           if args.stdoutDump: logfile = sys.stdout
 #           if envFile != None: cmd = '. %s && %s' % (envFile, cmd)
             self.appendOutput('Launching test with command: ' + cmd + '\n')
+
+            if self.dry_run:
+                self.status = True
+                self.handle_cmd_end()
+                return
+
 
             testEnv = os.environ.copy()
             testEnv['PULP_CURRENT_CONFIG'] = self.config.get_name()
@@ -482,6 +493,12 @@ class TestRun(protocol.ProcessProtocol):
 
         elif type(cmd) == p.Check:
             self.appendOutput('Executing checker\n')
+            
+            if self.dry_run:
+                self.status = True
+                self.handle_cmd_end()
+                return
+
             cwd = os.getcwd()
             os.chdir(self.getExecPath())
             try:
@@ -495,8 +512,17 @@ class TestRun(protocol.ProcessProtocol):
                 self.appendOutput('Checker returned wrong status\n')
             self.handle_cmd_end()
 
-    def run(self, reactor, callback=None, *kargs, **kwargs):
-        self.commands = self.test.commands.copy()
+    def run(self, reactor, callback=None, commands=None, dry_run=False, *kargs, **kwargs):
+
+        if commands is None:
+            self.commands = self.test.commands.copy()
+        else:
+            self.commands = []
+            for test_command in self.test.commands:
+                if test_command.name in commands:
+                    self.commands.append(test_command)
+
+        self.dry_run = dry_run
         self.callback = callback
         self.kargs = kargs
         self.kwargs = kwargs
@@ -508,4 +534,5 @@ class TestRun(protocol.ProcessProtocol):
 
         self.timeout_call_id = None
 
-        self.runCommand()
+
+        self.reactor.callLater(0, self.runCommand)

@@ -297,7 +297,7 @@ class TestRunner(object):
         self, nbThreads=1, server=False, stdout=False, 
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
-        bench_csv_file=None, bench_regexp=None):
+        bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False):
         self.nb_runs = 0
         self.tests = []
         self.server = server
@@ -320,6 +320,9 @@ class TestRunner(object):
         self.average_load = None
         self.bench_regexp = bench_regexp
         self.bench_csv_file = bench_csv_file
+        self.commands = commands
+        self.cpu_load_checker_call_id = None
+        self.dry_run = dry_run
 
         if average_load is not None:
           self.average_load = average_load * 100
@@ -417,7 +420,9 @@ class TestRunner(object):
 
     def check_completion(self):
       if self.runCompletionCallback != None and len(self.pendings) == 0 and len(self.runnings) == 0:
-        self.cpu_load_checker_call_id.cancel()
+        if self.cpu_load_checker_call_id is not None:
+          self.cpu_load_checker_call_id.cancel()
+          self.cpu_load_checker_call_id = None
         self.runCompletionCallback(*self.runCompletionArgs, **self.runCompletionKwargs)
 
     def run(self, testrun):
@@ -428,7 +433,7 @@ class TestRunner(object):
       
       print (bcolors.OKBLUE + 'START'.ljust(6) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
 
-      testrun.run(reactor, self.testEnd, testrun)
+      testrun.run(reactor, self.testEnd, self.commands, self.dry_run, testrun)
 
     def check_cpu_load(self):
       if len(self.runnings) >= self.nbThreads:
