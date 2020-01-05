@@ -43,8 +43,8 @@ class UiClient(protocol.Protocol):
         self.pendingData = None
 
     def setTestsetIcon(self, test, config, icon):
-      test.running[config] = True
-      if not test.hide and len(test.childs) == 0 and test.isActiveForConfig(config): test.button[config].set_image(gtk.Image.new_from_icon_name(icon, 1))
+      test.running[config.__str__()] = True
+      if not test.hide and len(test.childs) == 0 and test.isActiveForConfig(config): test.button[config.__str__()].set_image(gtk.Image.new_from_icon_name(icon, 1))
       for child in test.childs:
           self.setTestsetIcon(child, config, icon)
 
@@ -77,11 +77,13 @@ class UiClient(protocol.Protocol):
     def list_click(self, widget, event, test):
       test.expanded = not test.expanded
 
-      self.test_expand(test, not test.expanded)
+      self.test_expand([test], not test.expanded)
 
       for i in range(len(self.configs) + 1, -1, -1):
         self.grid.remove_column(i)
-      self.dumpTestsetToTree(self.grid, self.configs, self.tests)
+      
+      for test in self.tests:
+        self.dumpTestsetToTree(self.grid, self.configs, test)
       self.window.show_all()
 
       return
@@ -92,13 +94,14 @@ class UiClient(protocol.Protocol):
 
       #button.hide()
 
-    def test_expand(self, test, hide):
-      if len(test.childs) == 0: return
-      else:
-        hide = hide or not test.expanded
-        for child in test.childs:
-          child.hide = hide 
-          self.test_expand(child, hide)
+    def test_expand(self, tests, hide):
+      for test in tests:
+        if len(test.childs) == 0: continue
+        else:
+          hide = hide or not test.expanded
+          for child in test.childs:
+            child.hide = hide 
+            self.test_expand([child], hide)
 
     def test_hide2(self, test, status):
       test.hide = not status
@@ -142,8 +145,8 @@ class UiClient(protocol.Protocol):
           configId += 1
           continue
         if len(testset.childs) == 0:
-          if testset.status.get(config) != None: img = gtk.Image.new_from_icon_name('emblem-default', 3) if testset.status.get(config) else gtk.Image.new_from_icon_name('process-stop', 3)
-          elif testset.running.get(config) == True: img = gtk.Image.new_from_icon_name('image-loading', 1)
+          if testset.running.get(config.__str__()) == True: img = gtk.Image.new_from_icon_name('image-loading', 1)
+          elif testset.status.get(config.__str__()) != None: img = gtk.Image.new_from_icon_name('emblem-default', 3) if testset.status.get(config.__str__()) else gtk.Image.new_from_icon_name('process-stop', 3)
           else: img = gtk.Image.new_from_icon_name("media-playback-start", 3)
           button = gtk.Button(image=img)
           menu = gtk.Menu()
@@ -153,8 +156,8 @@ class UiClient(protocol.Protocol):
           menu_item.connect("activate", self.view_log, testset, config)
           button.connect_object("button-press-event", self.button_press, menu)
         else:
-          button = gtk.Button(label="%d/%d" % (testset.getNbSuccess(config), testset.getNbTests(config)))
-        testset.button[config] = button
+          button = gtk.Button(label="%d/%d" % (testset.getNbSuccess(config.__str__()), testset.getNbTests(config.__str__())))
+        testset.button[config.__str__()] = button
         button.connect("clicked", self.clicked_play, testset, config)
         grid.attach(button, 2 + configId, index, 1, 1)
         configId += 1
@@ -183,7 +186,7 @@ class UiClient(protocol.Protocol):
 
     def update_testsets(self, test, config):
       if not test.hide and len(test.childs) != 0:
-        test.button[config].set_label("%d/%d" % (test.getNbSuccess(config), test.getNbTests(config)))
+        test.button[config.__str__()].set_label("%d/%d" % (test.getNbSuccess(config.__str__()), test.getNbTests(config.__str__())))
 
     def dataReceived(self, data):
 
@@ -210,14 +213,17 @@ class UiClient(protocol.Protocol):
 
           self.configIndex = {}
           for configId in range(0, len(cmd.configs)):
-            self.configIndex[cmd.configs[configId]] = configId
+            self.configIndex[cmd.configs[configId].__str__()] = configId
 
+          for test in self.tests:
+            test.walk_cb(self.test_init)
 
-          self.tests.walk_cb(self.test_init)
+          expanded = True
 
-          self.tests.expanded = True
+          for test in self.tests:
+            test.expanded = expanded
 
-          self.test_expand(self.tests, not self.tests.expanded)
+          self.test_expand(self.tests, not expanded)
 
           self.window = gtk.ApplicationWindow(application=self.app)
           self.window.connect("delete_event", self.delete_event)
@@ -252,7 +258,7 @@ class UiClient(protocol.Protocol):
           tree.append_column(column)
           confbox.pack_start(tree, True, True, 0)
           for configId in range(0, len(cmd.configs)):
-            store.append([cmd.configs[configId], configId])
+            store.append([cmd.configs[configId].__str__(), configId])
 
 
 
@@ -281,25 +287,31 @@ class UiClient(protocol.Protocol):
           viewport.add(grid)
           self.grid = grid
 
-          print (cmd.tests)
-          self.dumpTestsetToTree(grid, cmd.configs, cmd.tests)
+          for test in cmd.tests:
+            self.dumpTestsetToTree(grid, cmd.configs, test)
 
           self.window.show_all()
 
         elif cmd.name == "test run result":
           icon = 'emblem-default' if cmd.status else 'process-stop'
-          test = self.tests.get(cmd.test)
-          test.running[cmd.config] = True
-          test.log[cmd.config] = cmd.log
-          test.status[cmd.config] = cmd.status
-          self.store.remove(test.store[cmd.config])
-          if not test.hide:
-            test.button[cmd.config].set_image(gtk.Image.new_from_icon_name(icon, 3))
-          test.walk_cb(self.update_testsets, down=False, config=cmd.config)
+          for test_obj in self.tests:
+            test = test_obj.get(cmd.test)
+            if test is not None:
+              test.running[cmd.config.__str__()] = False
+              test.log[cmd.config] = cmd.log
+              test.status[cmd.config.__str__()] = cmd.status
+              self.store.remove(test.store[cmd.config.__str__()])
+              if not test.hide:
+                test.button[cmd.config.__str__()].set_image(gtk.Image.new_from_icon_name(icon, 3))
+              test.walk_cb(self.update_testsets, down=False, config=cmd.config)
 
         elif cmd.name == 'test running':
-          test = self.tests.get(cmd.test)
-          test.store[cmd.config] = self.store.append([test.getFullName(), self.configIndex[cmd.config]])
+          for test_obj in self.tests:
+            test = test_obj.get(cmd.test)
+
+            if test is not None:
+              self.configIndex[cmd.config.__str__()]
+              test.store[cmd.config.__str__()] = self.store.append([test.getFullName(), self.configIndex[cmd.config.__str__()]])
     
     def connectionLost(self, reason):
         print("connection lost")

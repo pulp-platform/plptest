@@ -130,6 +130,7 @@ class CfgParser(object):
         if test.path != None: test.struct.setDir(test.path)
 
         test.struct.set_restrict(test.restrict)
+        test.struct.scores = test.scores
 
         for tag in test.tags:
           test.struct.addTag(tag)
@@ -266,18 +267,31 @@ class UiHandler(protocol.Protocol):
     def __init__(self, configs, tests):
       self.tests = tests
       self.configs = configs
+      self.data = b""
 
     def dataReceived(self, data):
 
-      cmd = pickle.loads(data)
+      self.data += data
+
+      try:
+        cmd = pickle.loads(self.data)
+
+      except:
+        return
+
       if cmd.name == 'get tests':
         cmd.tests = self.tests
         cmd.configs = self.configs
         self.transport.write(pickle.dumps(cmd))
       elif cmd.name == 'run tests':
         for config in cmd.configs:
-          for test in cmd.tests:
-            self.tests.get(test).run(config)
+          for test_name in cmd.tests:
+            for test in self.tests:
+              test_obj = test.get(test_name)
+              if test_obj is not None:
+                test_obj.run(config)
+
+      self.data = b""
 
 class UiServer(protocol.Factory):
 
@@ -368,7 +382,12 @@ class TestRunner(object):
         run.close()
       self.runnings = []
 
+    def command_done(self):
+      reactor.callLater(1, self.command_callback)
+
     def start(self, callback=None, *args, **kwargs):
+
+      self.command_callback = callback
 
       for config in self.configs:
         for test in self.tests:
@@ -426,6 +445,7 @@ class TestRunner(object):
         self.runCompletionCallback(*self.runCompletionArgs, **self.runCompletionKwargs)
 
     def run(self, testrun):
+
       self.runnings.append(testrun)
 
       if self.uiServer is not None and self.uiServer.handler is not None:

@@ -23,6 +23,7 @@ import signal
 import shlex
 import plptest as p
 import re
+from prettytable import PrettyTable
 
 class Command(object):
 
@@ -80,11 +81,11 @@ class TestCommon(object):
 
     def checkConfig(self, config):
         try:
-            self.activeForConfig[config] = \
+            self.activeForConfig[config.__str__()] = \
                 self.restrict is None or \
                 eval(self.restrict)
         except:
-            self.activeForConfig[config] = False
+            self.activeForConfig[config.__str__()] = False
         for child in self.childs:
             child.checkConfig(config)
         if self.getNbTests(config) != 0:
@@ -101,7 +102,7 @@ class TestCommon(object):
         if self.parent is not None and \
                 not self.parent.isActiveForConfig(config):
             return False
-        return self.activeForConfig.get(config)
+        return self.activeForConfig.get(config.__str__())
 
     def getFullName(self):
         if self.parent is None:
@@ -111,7 +112,7 @@ class TestCommon(object):
     def get(self, fullName):
         nameList = fullName.split(':')
         name = nameList[0]
-        if name is not self.name:
+        if name != self.name:
             return None
         if len(nameList) == 1:
             return self
@@ -198,6 +199,19 @@ class Testset(TestCommon):
         for child in self.childs:
             child.show()
 
+    def score(self, table=None, file=None):
+        score = 0.0
+        nb_score = 0
+        for child in self.childs:
+            (child_score, child_nb_score) = child.score(table=table, file=file)
+            score += child_score
+            nb_score += child_nb_score
+
+        if nb_score > 0:
+            score = score / nb_score
+
+        return (score, 1)
+
     def run(self, config):
         if not self.isActiveForConfig(config):
             return
@@ -245,6 +259,41 @@ class Test(TestCommon):
 
     def show(self):
         print (self.name)
+
+    def score(self, table=None, file=None):
+
+        if len(self.scores) != 0:
+
+            is_first = True
+            nb_score = 0
+            total_score = 0
+
+            #print (self.getFullName())
+
+            for score in self.scores:
+
+                value, desc = self.runner.bench_csv_file.get(score.name)
+                value = float(value)
+
+                if value is None:
+                    raise Exception("Unknown benchmark item: " + score.name)
+                
+                score_value = eval(score.score)
+
+                name = self.getFullName() if is_first else ""
+                is_first = False
+
+                table.add_row([name, score.name, desc, value, score_value])
+
+                #print ('\t%s\t%f' % (score.name, score_value))
+
+                total_score += score_value
+                nb_score += 1
+
+            if nb_score > 0:
+                total_score = total_score / nb_score
+
+        return (total_score, 1)
 
     def get_testrun(self, config):
         if not self.isActiveForConfig(config):
@@ -363,7 +412,7 @@ class TestRun(protocol.ProcessProtocol):
                 bench = pattern.match(line)
                 if bench is not None:
                     key, value = bench.group(1).split('=')
-                    self.runner.bench_csv_file[key] = value
+                    self.runner.bench_csv_file[key] = [value, bench.group(2)]
 
         if self.runner.safe_stdout:
             print (self.log)

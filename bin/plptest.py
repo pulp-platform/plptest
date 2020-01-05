@@ -31,7 +31,7 @@ class Testset(object):
 
 class Test(object):
 
-    def __init__(self, name, commands=[], timeout=-1, parent=None, path=None, restrict=None, tags=[], params=[], description=None):
+    def __init__(self, name, commands=[], timeout=-1, parent=None, path=None, restrict=None, tags=[], params=[], description=None, scores=[]):
         self.name = name
         self.commands = commands
         self.timeout = timeout
@@ -41,6 +41,7 @@ class Test(object):
         self.tags = tags
         self.params = params
         self.description = description
+        self.scores = scores
 
 class Shell(object):
 
@@ -56,3 +57,12 @@ class Check(object):
     self.checker = checker
     self.kargs = kargs
     self.kwargs = kwargs
+
+
+class Score(object):
+
+  def __init__(self, name=None, avg=None, score=None):
+    self.avg = avg
+    self.name = name
+    self.score = score
+

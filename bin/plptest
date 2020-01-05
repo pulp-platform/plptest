@@ -50,18 +50,52 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+def run_done():
+    runner.plpobjects.dumpTestsToConsole()
+    runner.plpobjects.dumpTestsToJunit(reportPath + '/junit-reports')
+    runner.command_done()
+
 def run(tests):
-  runner.runTests(args.testList, command_handle)
+  runner.runTests(args.testList, run_done)
   return 0
 
 def show(tests):
   for testset in tests:
     testset.show()
+
+  runner.command_done()
+
+  return 0
+
+def score(tests):
+
+  nb_score = 0
+  score = 0
+
+  table = PrettyTable(['Test', 'Bench item', 'Desc', 'Value', 'score'])
+  table.align = "l"
+
+  for testset in tests:
+    (test_score, test_nb_score) = testset.score(table=table)
+
+    score += test_score
+    nb_score += test_nb_score
+
+  if nb_score > 0:
+      score = score / nb_score
+
+  print (table)
+
+  print ('\nFinal score: %f' % score)
+
+  runner.command_done()
+
   return 0
 
 commands = {
   'run'    : ['Run the tests', run],
   'show'   : ['Show the tests', show],
+  'score'   : ['Show the scores', score],
 }
 	
 
@@ -92,8 +126,9 @@ parser.add_argument("--test", dest="testList", default=None, action="append", he
 parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Sets maximum timeout allowed for a test")
 parser.add_argument("--db", dest="db", action='store_true', default=False, help="Activate Pulp database access")
 parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Specify worker pool")
+parser.add_argument("--score-csv-file", dest="score_csv_file", default=None, help="Specify CSV file for scores")
 parser.add_argument("--bench-csv-file", dest="bench_csv_file", default=None, help="Specify CSV file for benchmark results")
-parser.add_argument("--bench-regexp", dest="bench_regexp", default='@BENCH@(\S+)@', help="Specify regexp for extracting benchmark results")
+parser.add_argument("--bench-regexp", dest="bench_regexp", default='@BENCH@(.*)@DESC@(.*)@', help="Specify regexp for extracting benchmark results")
 
 
 args = parser.parse_args()
@@ -113,13 +148,11 @@ if args.bench_csv_file is not None:
     with open(args.bench_csv_file, 'r') as file:
       csv_reader = csv.reader(file)
       for row in csv_reader:
-        bench_csv_file[row[0]] = row[1]
+        bench_csv_file[row[0]] = row[1:]
 
 
 def command_handle():
-  if len(args.command) == 0: 
-    runner.plpobjects.dumpTestsToConsole()
-    runner.plpobjects.dumpTestsToJunit(reportPath + '/junit-reports')
+  if len(args.command) == 0:
     runner.stop()
     return
 
@@ -139,7 +172,9 @@ if len(args.command) == 0 and not args.gui:
 
 runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
-    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average, bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp, commands=args.commands, dry_run=args.dry_run
+    maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average,
+    bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp, commands=args.commands, dry_run=args.dry_run,
+    server=args.gui
 )
 for testset in args.testset:
   runner.addTestset(testset)
@@ -163,4 +198,4 @@ if bench_csv_file is not None:
   with open(args.bench_csv_file, 'w') as file:
     csv_writer = csv.writer(file)
     for key, value in bench_csv_file.items():
-      csv_writer.writerow([key, value])
+      csv_writer.writerow([key] + value)
