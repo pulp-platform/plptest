@@ -73,6 +73,7 @@ def score(tests):
   score = 0
 
   table = PrettyTable(['Test', 'Bench item', 'Desc', 'Value', 'score'])
+  table.float_format='.3'
   table.align = "l"
 
   for testset in tests:

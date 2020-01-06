@@ -24,6 +24,7 @@ import shlex
 import plptest as p
 import re
 from prettytable import PrettyTable
+import math
 
 class Command(object):
 
@@ -272,12 +273,12 @@ class Test(TestCommon):
 
             for score in self.scores:
 
+                if self.runner.bench_csv_file.get(score.name) is None:
+                    raise Exception("Unknown benchmark item: " + score.name)
+
                 value, desc = self.runner.bench_csv_file.get(score.name)
                 value = float(value)
 
-                if value is None:
-                    raise Exception("Unknown benchmark item: " + score.name)
-                
                 score_value = eval(score.score)
 
                 name = self.getFullName() if is_first else ""
