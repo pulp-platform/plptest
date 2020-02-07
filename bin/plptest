@@ -122,7 +122,7 @@ parser.add_argument("--threads", dest="threads", default=None, type=int, help="S
 parser.add_argument("--load-average", dest="load_average", default=0.9, type=float, help="Specify the system average load that this tool should try to respect, from 0 to 1")
 parser.add_argument("--stdout", dest="stdout", action="store_true", help="Dumps test output to stdout")
 parser.add_argument("--safe-stdout", dest="safe_stdout", action="store_true", help="Dumps test output to stdout once the test is done")
-parser.add_argument("--max-output-len", dest="maxOutputLen", type=int, default=1024*1024, help="Maximum length of a test output. Default: %(default)s bytes")
+parser.add_argument("--max-output-len", dest="maxOutputLen", type=int, default=-1, help="Maximum length of a test output. Default: %(default)s bytes")
 parser.add_argument("--test", dest="testList", default=None, action="append", help="Specify a test to be run")
 parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Sets maximum timeout allowed for a test")
 parser.add_argument("--db", dest="db", action='store_true', default=False, help="Activate Pulp database access")
