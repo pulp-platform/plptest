@@ -468,7 +468,7 @@ class TestRunner(object):
       try:
         load = psutil.cpu_percent(interval=0.1)
       except:
-        return False
+        return True
       return load < self.average_load
 
     def enqueueTestRun(self, testrun):
