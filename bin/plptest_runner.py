@@ -31,7 +31,10 @@ from plptest_utils import *
 import plpobjects
 import imp
 import plptest_condor
-import psutil
+try:
+  import psutil
+except:
+  pass
 
 class bcolors:
     HEADER = '\033[95m'
@@ -462,7 +465,10 @@ class TestRunner(object):
       if self.average_load is None:
         return True
 
-      load = psutil.cpu_percent(interval=0.1)
+      try:
+        load = psutil.cpu_percent(interval=0.1)
+      except:
+        return False
       return load < self.average_load
 
     def enqueueTestRun(self, testrun):
