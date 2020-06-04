@@ -25,6 +25,7 @@ import plptest as p
 import re
 from prettytable import PrettyTable
 import math
+import plptest_bench
 
 class Command(object):
 
@@ -293,6 +294,11 @@ class Test(TestCommon):
 
             if nb_score > 0:
                 total_score = total_score / nb_score
+
+            plot = plptest_bench.Jenkins_plot(self.getFullName() + '.score.csv')
+            plot.append('score', str(total_score))
+            plot.gen()
+
 
         return (total_score, 1)
 
