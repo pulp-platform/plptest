@@ -212,6 +212,10 @@ class Testset(TestCommon):
         if nb_score > 0:
             score = score / nb_score
 
+        plot = plptest_bench.Jenkins_plot(self.getFullName() + '.score.csv')
+        plot.append('score', str(score))
+        plot.gen()
+
         return (score, 1)
 
     def run(self, config):
