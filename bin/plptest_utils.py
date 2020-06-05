@@ -268,11 +268,12 @@ class Test(TestCommon):
 
     def score(self, table=None, file=None):
 
+        total_score = 0
+
         if len(self.scores) != 0:
 
             is_first = True
             nb_score = 0
-            total_score = 0
 
             #print (self.getFullName())
 
