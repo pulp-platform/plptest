@@ -206,17 +206,25 @@ class Testset(TestCommon):
         nb_score = 0
         for child in self.childs:
             (child_score, child_nb_score) = child.score(table=table, file=file)
+
+            if child_nb_score == 0:
+                continue
+
             score += child_score
             nb_score += child_nb_score
 
         if nb_score > 0:
             score = score / nb_score
 
-        plot = plptest_bench.Jenkins_plot(self.getFullName() + '.score.csv')
-        plot.append('score', str(score))
-        plot.gen()
+            plot = plptest_bench.Jenkins_plot(self.getFullName() + '.score.csv')
+            plot.append('score', str(score))
+            plot.gen()
 
-        return (score, 1)
+            return (score, 1)
+
+        else:
+
+            return (None, 0)
 
     def run(self, config):
         if not self.isActiveForConfig(config):
@@ -305,7 +313,11 @@ class Test(TestCommon):
             plot.gen()
 
 
-        return (total_score, 1)
+            return (total_score, 1)
+
+        else:
+
+            return (None, 0)
 
     def get_testrun(self, config):
         if not self.isActiveForConfig(config):
