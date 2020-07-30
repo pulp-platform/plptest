@@ -293,7 +293,10 @@ class Test(TestCommon):
                 value, desc = self.runner.bench_csv_file.get(score.name)
                 value = float(value)
 
-                score_value = eval(score.score)
+                try:
+                    score_value = eval(score.score)
+                except:
+                    score_value = 0.0
 
                 name = self.getFullName() if is_first else ""
                 is_first = False
