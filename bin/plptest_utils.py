@@ -461,6 +461,7 @@ class TestRun(protocol.ProcessProtocol):
 
         if self.timeout_call_id is not None:
             self.timeout_call_id.cancel()
+            self.timeout_call_id = None
 
         if len(self.commands) == 0:
             self.status = True
