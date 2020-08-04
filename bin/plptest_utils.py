@@ -288,15 +288,16 @@ class Test(TestCommon):
             for score in self.scores:
 
                 if self.runner.bench_csv_file.get(score.name) is None:
-                    raise Exception("Unknown benchmark item: " + score.name)
-
-                value, desc = self.runner.bench_csv_file.get(score.name)
-                value = float(value)
-
-                try:
-                    score_value = eval(score.score)
-                except:
+                    value = 0
                     score_value = 0.0
+                else:
+                    value, desc = self.runner.bench_csv_file.get(score.name)
+                    value = float(value)
+
+                    try:
+                        score_value = eval(score.score)
+                    except:
+                        score_value = 0.0
 
                 name = self.getFullName() if is_first else ""
                 is_first = False
