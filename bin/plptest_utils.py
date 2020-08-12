@@ -299,10 +299,10 @@ class Test(TestCommon):
                     except:
                         score_value = 0.0
 
-                name = self.getFullName() if is_first else ""
-                is_first = False
+                    name = self.getFullName() if is_first else ""
+                    is_first = False
 
-                table.add_row([name, score.name, desc, value, score_value])
+                    table.add_row([name, score.name, desc, value, score_value])
 
                 #print ('\t%s\t%f' % (score.name, score_value))
 
