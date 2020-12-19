@@ -424,10 +424,13 @@ class TestRun(protocol.ProcessProtocol):
 
     def close(self, kill=False):
 
-        process = psutil.Process(pid=self.pid)
-
-        for children in process.children(recursive=True):
-            os.kill(children.pid, signal.SIGKILL)
+        try:
+            process = psutil.Process(pid=self.pid)
+    
+            for children in process.children(recursive=True):
+                os.kill(children.pid, signal.SIGKILL)
+        except:
+            pass
 
     def terminate(self):
         if self.callback is not None:
