@@ -526,7 +526,7 @@ class TestRunner(object):
       self.check_pending_tests()
 
 
-    def runTests(self, tests, callback=None, *args, **kwargs):
+    def runTests(self, tests, tests_re, callback=None, *args, **kwargs):
 
       self.cpu_load_checker_call_id = reactor.callLater(1, self.cpu_load_check)
 
@@ -536,14 +536,21 @@ class TestRunner(object):
       self.enqueue_all = False
 
       for config in self.configs:
-        if tests == None:
+        if tests is None and tests_re is None:
           for test in self.tests:
             test.run(config)
         else:
-          for testRegExp in tests:
-            for test2 in self.tests:
-              for test in test2.getFromRegExp(testRegExp):
-                test.run(config)
+          if tests_re is not None:
+            for testRegExp in tests_re:
+              for test2 in self.tests:
+                for test in test2.getFromRegExp(testRegExp):
+                  test.run(config)
+
+          if tests is not None:
+            for name in tests:
+              for test2 in self.tests:
+                for test in test2.getFromName(name):
+                  test.run(config)
 
       self.enqueue_all = True
 

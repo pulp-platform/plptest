@@ -136,6 +136,17 @@ class TestCommon(object):
 
         return tests
 
+    def getFromName(self, name):
+
+        if name == self.getFullName():
+            return [self]
+
+        tests = []
+        for child in self.childs:
+            tests += child.getFromName(name)
+
+        return tests
+
     def getNbTests(self, config):
         if not self.isActiveForConfig(config):
             return 0

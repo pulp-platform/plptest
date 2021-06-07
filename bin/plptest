@@ -59,7 +59,7 @@ def run_done():
     runner.command_done()
 
 def run(tests):
-  runner.runTests(args.testList, run_done)
+  runner.runTests(args.testList, args.testList_re, run_done)
   return 0
 
 def show(tests):
@@ -128,6 +128,7 @@ parser.add_argument("--stdout", dest="stdout", action="store_true", help="Dumps 
 parser.add_argument("--safe-stdout", dest="safe_stdout", action="store_true", help="Dumps test output to stdout once the test is done")
 parser.add_argument("--max-output-len", dest="maxOutputLen", type=int, default=-1, help="Maximum length of a test output. Default: %(default)s bytes")
 parser.add_argument("--test", dest="testList", default=None, action="append", help="Specify a test to be run")
+parser.add_argument("--test-re", dest="testList_re", default=None, action="append", help="Specify a test (based on a regular expression) to be run")
 parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Sets maximum timeout allowed for a test")
 parser.add_argument("--db", dest="db", action='store_true', default=False, help="Activate Pulp database access")
 parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Specify worker pool")
