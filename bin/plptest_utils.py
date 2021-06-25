@@ -214,10 +214,13 @@ class Testset(TestCommon):
             child.show()
 
     def score(self, table=None, file=None):
+        error = False
         score = 0.0
         nb_score = 0
         for child in self.childs:
-            (child_score, child_nb_score) = child.score(table=table, file=file)
+            (child_error, child_score, child_nb_score) = child.score(table=table, file=file)
+
+            error = error or child_error
 
             if child_nb_score == 0:
                 continue
@@ -232,11 +235,11 @@ class Testset(TestCommon):
             plot.append('score', str(score))
             plot.gen()
 
-            return (score, 1)
+            return (error, score, 1)
 
         else:
 
-            return (None, 0)
+            return (error, None, 0)
 
     def run(self, config):
         if not self.isActiveForConfig(config):
@@ -288,6 +291,8 @@ class Test(TestCommon):
 
     def score(self, table=None, file=None):
 
+        error = False
+
         total_score = 0
 
         if len(self.scores) != 0:
@@ -314,9 +319,15 @@ class Test(TestCommon):
                     name = self.getFullName() if is_first else ""
                     is_first = False
 
-                    table.add_row([name, score.name, desc, value, score_value])
+                    if table is not None:
+                        table.add_row([name, score.name, desc, value, score_value])
 
                 #print ('\t%s\t%f' % (score.name, score_value))
+
+                if score.checker is not None:
+                    score.value = value
+                    score.score = score_value
+                    error = error or score.checker(score)
 
                 total_score += score_value
                 nb_score += 1
@@ -329,11 +340,11 @@ class Test(TestCommon):
             plot.gen()
 
 
-            return (total_score, 1)
+            return (error, total_score, 1)
 
         else:
 
-            return (None, 0)
+            return (error, None, 0)
 
     def get_testrun(self, config):
         if not self.isActiveForConfig(config):
@@ -611,6 +622,15 @@ class TestRun(protocol.ProcessProtocol):
                 self.appendOutput('Checker returned wrong status\n')
             self.handle_cmd_end()
 
+        elif type(cmd) == p.Check_score:
+            self.appendOutput('Executing score checker\n')
+
+            (error, score, nb_scores) = self.test.score()
+
+            self.status = not error
+
+            self.handle_cmd_end()
+            
     def run(self, reactor, callback=None, commands=None, dry_run=False, *kargs, **kwargs):
 
         self.dry_run = dry_run

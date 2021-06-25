@@ -74,13 +74,16 @@ def score(tests):
 
   nb_score = 0
   score = 0
+  error = False
 
   table = PrettyTable(['Test', 'Bench item', 'Desc', 'Value', 'score'])
   table.float_format='.3'
   table.align = "l"
 
   for testset in tests:
-    (test_score, test_nb_score) = testset.score(table=table)
+    (test_error, test_score, test_nb_score) = testset.score(table=table)
+
+    error = error or test_error
 
     if test_nb_score > 0:
       score += test_score
@@ -95,7 +98,7 @@ def score(tests):
 
   runner.command_done()
 
-  return 0
+  return error
 
 commands = {
   'run'    : ['Run the tests', run],
