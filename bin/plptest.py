@@ -84,6 +84,7 @@ class Testcase(object):
     self.category = category
     self.features = features
 
+
 class Testplan_category(object):
   def __init__(self, name):
     self.name = name
@@ -91,6 +92,7 @@ class Testplan_category(object):
 
   def add_feature(self, name):
     self.features.append(name)
+
 
 class Testplan(object):
 

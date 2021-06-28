@@ -56,6 +56,7 @@ class bcolors:
 def run_done():
     runner.plpobjects.dumpTestsToConsole()
     runner.plpobjects.dumpTestsToJunit(reportPath + '/junit-reports')
+    runner.dump_testplan()
     runner.command_done()
 
 def run(tests):

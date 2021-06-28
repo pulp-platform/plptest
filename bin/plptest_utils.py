@@ -65,6 +65,148 @@ class TestRunResult(Command):
         self.log = log
 
 
+class Testplan_feature(object):
+
+    def __init__(self, name):
+        self.name = name
+        self.nb_passed = 0
+        self.nb_tests = 0
+        self.tests = []
+
+    def testcase_result(self, testcase, status, test_name):
+        self.nb_tests += 1
+        if status:
+            self.nb_passed += 1
+
+        self.tests.append([testcase.description, status, test_name])
+
+        return (True, '')
+
+    def dump(self, x, category, indent):
+        if self.nb_tests > 0:
+            ratio = float(self.nb_passed) / self.nb_tests
+        else:
+            ratio = 0.0
+
+        x.add_row(['%s%s' % (indent, self.name), self.nb_passed, self.nb_tests, ratio ])
+
+        for test in self.tests:
+            x.add_row(['%s%s' % (indent + '    ', test[2]), 1 if test[1] else 0, 1, float(1 if test[1] else 0)])
+
+class Testplan_category(object):
+
+    def __init__(self, name, full_name):
+        self.name = name
+        self.features = {}
+        self.nb_passed = 0
+        self.nb_tests = 0
+        self.categories = {}
+        self.full_name = full_name
+
+    def add_category(self, name):
+        name_list = name.split(':')
+
+        if self.categories.get(name_list[0]) is None:
+            self.categories[name_list[0]] = Testplan_category(name_list[0], '%s:%s' % (self.full_name, name_list[0]))
+
+        if len(name_list) != 1:
+            self.categories[name_list[0]].add_category(':'.join(name_list[1:]))
+
+        return self.categories[name_list[0]]
+
+    def add_feature(self, name):
+        name_list = name.split(':')
+        if len(name_list) == 1:
+            self.features[name] = Testplan_feature(name)
+        else:
+            self.categories.get(name_list[0]).add_feature(':'.join(name_list[1:]))
+
+    def testcase_result(self, testcase, status, name, test_name):
+        self.nb_tests += 1
+        if status:
+            self.nb_passed += 1
+
+        if name is not None:
+            name_list = name.split(':')
+            if len(name_list) == 1:
+                subname = None
+            else:
+                subname = '/'.join(name_list[1:])
+
+            if self.categories.get(name_list[0]) is None:
+                return (False, "Unknown testplan category (category: %s)\n" % name_list[0])
+
+            return self.categories.get(name_list[0]).testcase_result(testcase, status, subname, test_name)
+
+        else:
+            for feature in testcase.features:
+                if self.features.get(feature) is None:
+                    return (False, "Unknown testplan feature (category: %s, features: %s)\n" % (testcase.category, ' '.join(testcase.features)))
+
+                (error, msg) = self.features.get(feature).testcase_result(testcase, status, test_name)
+                if not error:
+                    return (error, msg)
+
+            return (True, '')
+
+    def dump(self, x, indent):
+        if self.nb_tests > 0:
+            ratio = float(self.nb_passed) / self.nb_tests
+        else:
+            ratio = 0.0
+        x.add_row(['%s%s' % (indent, self.name), self.nb_passed, self.nb_tests, ratio ])
+
+        for name, feature in self.features.items():
+            feature.dump(x, self.full_name, indent + '    ')
+
+        for name, category in self.categories.items():
+            category.dump(x, indent + '    ')
+
+
+
+
+class Testplan(object):
+
+    def __init__(self, name):
+        self.name = name
+        self.categories = {}
+
+    def testcase_result(self, testcase, status, test_name):
+
+        name = testcase.category
+        name_list = name.split(':')
+        if len(name_list) == 1:
+            subname = None
+        else:
+            subname = '/'.join(name_list[1:])
+
+        if self.categories.get(name_list[0]) is None:
+            return (False, "Unknown testplan category (category: %s)\n" % name_list[0])
+
+        return self.categories.get(name_list[0]).testcase_result(testcase, status, subname, test_name)
+
+    def add_category(self, name):
+
+        name_list = name.split(':')
+
+        if self.categories.get(name_list[0]) is None:
+            self.categories[name_list[0]] = Testplan_category(name_list[0], name_list[0])
+
+        if len(name_list) != 1:
+            return self.categories[name_list[0]].add_category(':'.join(name_list[1:]))
+
+        return self.categories[name_list[0]]
+
+    def dump(self):
+        x = PrettyTable(['Test', 'Passed', 'Total', 'Ratio passed'])
+        x.align = "l"
+        for name, category in self.categories.items():
+            category.dump(x, '')
+
+        print (x)
+
+
+
 class TestCommon(object):
     def __init__(self, runner, name, path, parent):
         self.name = name
@@ -271,9 +413,13 @@ class Test(TestCommon):
         self.checkers = []
         self.params = []
         self.deps = []
+        self.testcase = None
 
         if parent is not None:
             parent.regChild(self)
+
+    def set_testcase(self, testcase):
+        self.testcase = testcase
 
     def getPath(self):
         path = self.path
@@ -474,6 +620,12 @@ class TestRun(protocol.ProcessProtocol):
                 if bench is not None:
                     key, value = bench.group(1).split('=')
                     self.runner.bench_csv_file[key] = [value, bench.group(2)]
+
+        if self.test.testcase is not None:
+            status, msg = self.runner.testcase_result(self.test.testcase, self.status, self.test.name)
+            if not status:
+                self.appendOutput(msg)
+                self.status = False
 
         if self.runner.safe_stdout:
             print (self.log)

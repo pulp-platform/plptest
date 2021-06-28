@@ -105,6 +105,7 @@ def parse_test(top_testset, test, topParent, runner, path):
   if test.path != None: test.struct.setDir(test.path)
 
   test.struct.set_restrict(test.restrict)
+  test.struct.set_testcase(test.testcase)
   test.struct.scores = test.scores
   test.struct.skip = test.skip
 
@@ -143,6 +144,9 @@ class CfgParser(object):
     result = top_testset
 
     testsets = self.config.get('testsets')
+
+    if self.config.get('testplan') is not None:
+      self.runner.add_testplan(self.config.get('testplan'))
 
     if topParent is None and (testsets is None or len(testsets) > 1):
       topParent = Testset(self.runner, 'top', 'top')
@@ -334,6 +338,8 @@ class UiServer(protocol.Factory):
       return self.handler
 
 
+
+
 class TestRunner(object):
 
     def __init__(
@@ -377,6 +383,19 @@ class TestRunner(object):
 
         if worker_pool == 'condor':
             self.worker_pool = plptest_condor.Condor_pool()
+
+    def testcase_result(self, testcase, status, test_name):
+        if self.testplan is not None:
+            return self.testplan.testcase_result(testcase, status, test_name)
+        return (True, '')
+
+    def add_testplan(self, user_testplan):
+        self.testplan = Testplan(user_testplan.name)
+        for user_category in user_testplan.categories:
+            category = self.testplan.add_category(user_category.name)
+            for user_feature in user_category.features:
+                category.add_feature(user_feature)
+      
 
     def get_test_id(self):
         test_id = self.nb_runs
@@ -525,6 +544,9 @@ class TestRunner(object):
 
       self.check_pending_tests()
 
+    def dump_testplan(self):
+      if self.testplan is not None:
+        self.testplan.dump()
 
     def runTests(self, tests, tests_re, callback=None, *args, **kwargs):
 
