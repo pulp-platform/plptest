@@ -375,6 +375,7 @@ class TestRunner(object):
         self.commands = commands
         self.cpu_load_checker_call_id = None
         self.dry_run = dry_run
+        self.testplan = None
 
         test_runner = self
 

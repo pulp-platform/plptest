@@ -437,6 +437,9 @@ class Test(TestCommon):
 
     def score(self, table=None, file=None):
 
+        if self.runner.bench_csv_file is None:
+            return (error, None, 0)
+
         error = False
 
         total_score = 0
