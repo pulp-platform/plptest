@@ -88,10 +88,10 @@ class Testplan_feature(object):
         else:
             ratio = 0.0
 
-        x.add_row(['%s%s' % (indent, self.name), self.nb_passed, self.nb_tests, ratio ])
+        x.add_row(['%s%s' % (indent, self.name), self.nb_passed, self.nb_tests, ratio, '' ])
 
         for test in self.tests:
-            x.add_row(['%s%s' % (indent + '    ', test[2]), 1 if test[1] else 0, 1, float(1 if test[1] else 0)])
+            x.add_row(['%s%s' % (indent + '    ', test[2]), 1 if test[1] else 0, 1, float(1 if test[1] else 0), test[0]])
 
 class Testplan_category(object):
 
@@ -154,7 +154,7 @@ class Testplan_category(object):
             ratio = float(self.nb_passed) / self.nb_tests
         else:
             ratio = 0.0
-        x.add_row(['%s%s' % (indent, self.name), self.nb_passed, self.nb_tests, ratio ])
+        x.add_row(['%s%s' % (indent, self.name), self.nb_passed, self.nb_tests, ratio, '' ])
 
         for name, feature in self.features.items():
             feature.dump(x, self.full_name, indent + '    ')
@@ -198,7 +198,7 @@ class Testplan(object):
         return self.categories[name_list[0]]
 
     def dump(self):
-        x = PrettyTable(['Test', 'Passed', 'Total', 'Ratio passed'])
+        x = PrettyTable(['Test', 'Passed', 'Total', 'Ratio passed', 'Description'])
         x.align = "l"
         for name, category in self.categories.items():
             category.dump(x, '')
