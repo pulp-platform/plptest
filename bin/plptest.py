@@ -18,7 +18,7 @@
 
 class Testset(object):
 
-  def __init__(self, name, files=[], tests=[], testsets=[], parent=None, restrict=None, tags=[], description=None, parallel=True):
+  def __init__(self, name, files=[], tests=[], testsets=[], parent=None, restrict=None, tags=[], description=None, parallel=True, skip=None):
     self.name = name
     self.files = files
     self.parent = parent
@@ -28,6 +28,7 @@ class Testset(object):
     self.parallel = parallel
     self.tests = tests
     self.testsets = testsets
+    self.skip = skip
 
 
 

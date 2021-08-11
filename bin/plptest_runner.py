@@ -72,6 +72,7 @@ def parse_testset(top_testset, testset, topParent, runner, path, rootdir):
 
   testset.struct.set_restrict(testset.restrict)
   testset.struct.set_parallel(testset.parallel)
+  testset.struct.skip = testset.skip
 
 
   for file in testset.files:
@@ -108,6 +109,8 @@ def parse_test(top_testset, test, topParent, runner, path):
   test.struct.set_testcase(test.testcase)
   test.struct.scores = test.scores
   test.struct.skip = test.skip
+  if test.skip is None and topParent is not None:
+    test.struct.skip = topParent.get_skip()
 
   for tag in test.tags:
     test.struct.addTag(tag)

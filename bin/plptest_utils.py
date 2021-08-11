@@ -223,6 +223,16 @@ class TestCommon(object):
         self.activeForConfig = {}
         self.addedConfigs = []
         self.restrict = None
+        self.skip = None
+
+    def get_skip(self):
+        if self.skip is not None:
+            return self.skip
+
+        if self.parent is not None:
+            return self.parent.get_skip()
+
+        return None
 
     def checkConfig(self, config):
         try:
