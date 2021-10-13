@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-
 #
 # Copyright (C) 2018 ETH Zurich and University of Bologna
 #
@@ -574,12 +571,12 @@ class Report(object):
         print ('Sending report email to: ' + author_email)
 
         server = smtplib.SMTP('iis-mail.ee.ethz.ch')
-         
+
         msg = MIMEMultipart()
         msg['From'] = "jenkins@iis.ee.ethz.ch"
         msg['To'] = author_email
         msg['Subject'] = subject
-         
+
         body = self.get_text()
         msg.attach(MIMEText(body, 'plain'))
 
@@ -590,7 +587,7 @@ class Report(object):
                 encoders.encode_base64(part)
                 part.add_header('Content-Disposition', "attachment; filename= %s" % attachment)
                 msg.attach(part)
-         
+
         text = msg.as_string()
 
         server.sendmail("jenkins@iis.ee.ethz.ch", author_email, text)
@@ -652,7 +649,7 @@ class PulpObjects(object):
                 value = True
             result[key] = value
         return result
-                                
+
 
     def get_builds(self, branches=[], config=None, env=[]):
         env = self.get_env_dict(env)
@@ -762,7 +759,7 @@ class PulpObjects(object):
             builds = self.get_builds(branches=branches, config=config, env=env)
 
             # If we don't have at least 2 builds, there is not regression
-            if len(builds) < 2: 
+            if len(builds) < 2:
                 continue
 
             # Now find out the last build with no regression
@@ -800,7 +797,7 @@ class PulpObjects(object):
         self.check_reg(branches, user_config, sheet, url, build, env=env)
 
 
-        
+
         sheet = report.alloc_sheet('Test result', 'tests')
 
         for config in self.get_configs():
@@ -851,7 +848,7 @@ class PulpObjects(object):
 
     def drop_all(self):
         self.db.drop_all()
-        
+
     def dump(self, builds=False, tests=False, branches=[]):
         if builds:
             x = PrettyTable([

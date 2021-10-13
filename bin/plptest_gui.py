@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-
 #
 # Copyright (C) 2018 ETH Zurich and University of Bologna
 #
@@ -81,7 +78,7 @@ class UiClient(protocol.Protocol):
 
       for i in range(len(self.configs) + 1, -1, -1):
         self.grid.remove_column(i)
-      
+
       for test in self.tests:
         self.dumpTestsetToTree(self.grid, self.configs, test)
       self.window.show_all()
@@ -100,7 +97,7 @@ class UiClient(protocol.Protocol):
         else:
           hide = hide or not test.expanded
           for child in test.childs:
-            child.hide = hide 
+            child.hide = hide
             self.test_expand([child], hide)
 
     def test_hide2(self, test, status):
@@ -141,7 +138,7 @@ class UiClient(protocol.Protocol):
 
       configId = 0
       for config in configs:
-        if not testset.isActiveForConfig(config): 
+        if not testset.isActiveForConfig(config):
           configId += 1
           continue
         if len(testset.childs) == 0:
@@ -312,7 +309,7 @@ class UiClient(protocol.Protocol):
             if test is not None:
               self.configIndex[cmd.config.__str__()]
               test.store[cmd.config.__str__()] = self.store.append([test.getFullName(), self.configIndex[cmd.config.__str__()]])
-    
+
     def connectionLost(self, reason):
         print("connection lost")
 
@@ -329,7 +326,7 @@ class UiFactory(protocol.ClientFactory):
     def clientConnectionFailed(self, connector, reason):
         print("Connection failed - goodbye!")
         #reactor.stop()
-    
+
     def clientConnectionLost(self, connector, reason):
         print("Connection lost - goodbye!")
         #reactor.stop()

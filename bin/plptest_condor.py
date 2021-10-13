@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-
 #
 # Copyright (C) 2018 ETH Zurich and University of Bologna
 #
@@ -31,7 +28,7 @@ class Condor_pool(object):
 
         #'fenga2.ee.ethz.ch', 'fenga3.ee.ethz.ch', 'larain1.ee.ethz.ch',
         # 'larain2.ee.ethz.ch', 'larain3.ee.ethz.ch',
-        # 'larain4.ee.ethz.ch', 'pisoc2.ee.ethz.ch', 
+        # 'larain4.ee.ethz.ch', 'pisoc2.ee.ethz.ch',
 
         #machines_string = []
         #for machine in machines:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 #
 # Copyright (C) 2018 ETH Zurich and University of Bologna
 #
@@ -16,7 +14,7 @@
 # limitations under the License.
 #
 
-# 
+#
 # Authors: Germain Haugou (germain.haugou@gmail.com)
 #
 
@@ -60,7 +58,7 @@ if os.environ.get('PYTHON_LOG') != None:
 
 def getOptionValue(value):
     return os.path.expandvars(value)
-            
+
 
 def parse_testset(top_testset, testset, topParent, runner, path, rootdir):
   if testset.parent != None: parent = testset.struct
@@ -208,10 +206,10 @@ class IniParser(object):
     self.parser = config
     config.optionxform = str
     openedPaths = config.read(self.file)
-    
+
     if len(openedPaths) == 0:
         logging.warning("Didn't manage to open file: %s" % (self.file))
-	        
+
     testsets = {}
     topTestset = None
 
@@ -292,7 +290,7 @@ class IniParser(object):
       else:
         raise Exception("Invalid section type: " + sectionType)
 
-    return topTestset    
+    return topTestset
 
 
 
@@ -346,7 +344,7 @@ class UiServer(protocol.Factory):
 class TestRunner(object):
 
     def __init__(
-        self, nbThreads=1, server=False, stdout=False, 
+        self, nbThreads=1, server=False, stdout=False,
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
         bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False):
@@ -399,7 +397,7 @@ class TestRunner(object):
             category = self.testplan.add_category(user_category.name)
             for user_feature in user_category.features:
                 category.add_feature(user_feature)
-      
+
 
     def get_test_id(self):
         test_id = self.nb_runs
@@ -458,7 +456,7 @@ class TestRunner(object):
 
       if callback != None:
         reactor.callWhenRunning(callback, *args, **kwargs)
-        
+
       signal.signal(signal.SIGINT, sigint_handler)
 
       if not reactor.running:
@@ -517,7 +515,7 @@ class TestRunner(object):
 
       if self.uiServer is not None and self.uiServer.handler is not None:
         self.uiServer.handler.transport.write(pickle.dumps(TestRunning(testrun.test.getFullName(), testrun.config)))
-      
+
       if testrun.skip is None:
         print (bcolors.OKBLUE + 'START'.ljust(6) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
 
