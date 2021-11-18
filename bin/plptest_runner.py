@@ -24,6 +24,7 @@ import socket
 import pickle
 import logging
 import os
+import sys
 from twisted.internet import protocol, reactor, endpoints
 from plptest_utils import *
 import plpobjects
@@ -480,7 +481,7 @@ class TestRunner(object):
       else:
         testStr = bcolors.FAIL + 'KO: '.ljust(6) + bcolors.ENDC
       print (testStr + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
-
+      sys.stdout.flush()
 
       test = self.plpobjects.getTest(testrun.test.getFullName())
       testResult = plpobjects.TestRun(self.plpobjects, test, testrun.status, testrun.duration, testrun.config, testrun.log, build=self.build, skip=testrun.skip)
@@ -518,6 +519,7 @@ class TestRunner(object):
 
       if testrun.skip is None:
         print (bcolors.OKBLUE + 'START'.ljust(6) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
+        sys.stdout.flush()
 
       testrun.run(reactor, self.testEnd, self.commands, self.dry_run, testrun)
 
