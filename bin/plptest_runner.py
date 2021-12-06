@@ -30,6 +30,8 @@ from plptest_utils import *
 import plpobjects
 import imp
 import plptest_condor
+import plptest
+import sys
 try:
   import psutil
 except:
@@ -65,7 +67,7 @@ def parse_testset(top_testset, testset, topParent, runner, path, rootdir):
   if testset.parent != None: parent = testset.struct
   else: parent = topParent
 
-  testset.struct = Testset(runner, testset.name, path, parent)
+  testset.struct = Testset(runner, testset.name, path, parent, testset)
   if top_testset is not None:
     top_testset.append(testset.struct)
 
@@ -73,12 +75,8 @@ def parse_testset(top_testset, testset, topParent, runner, path, rootdir):
   testset.struct.set_parallel(testset.parallel)
   testset.struct.skip = testset.skip
 
-
   for file in testset.files:
-    if file.find('.ini') != -1:
-      IniParser(runner, os.path.join(rootdir, file)).parse(testset.struct)
-    else:
-      CfgParser(runner, os.path.join(rootdir, file)).parse(testset.struct)
+    CfgParser(runner, os.path.join(rootdir, file)).parse(testset.struct)
 
   for sub_testset in testset.testsets:
     parse_testset(None, sub_testset, testset.struct, runner, path, rootdir)
@@ -95,7 +93,7 @@ def parse_test(top_testset, test, topParent, runner, path):
   else: parent = topParent
 
   logging.debug("Adding test (name: %s)" % (test.name))
-  test.struct = Test(runner, test.name, path, parent)
+  test.struct = Test(runner, test.name, path, parent, test)
   if top_testset is not None:
     top_testset.append(test.struct)
 
@@ -110,9 +108,6 @@ def parse_test(top_testset, test, topParent, runner, path):
   test.struct.skip = test.skip
   if test.skip is None and topParent is not None:
     test.struct.skip = topParent.get_skip()
-
-  for tag in test.tags:
-    test.struct.addTag(tag)
 
   test.struct.setTimeout(int(test.timeout))
 
@@ -133,14 +128,21 @@ class CfgParser(object):
     logging.debug("Starting parsing file (path: %s)" % (self.file))
 
     try:
-      module = imp.load_source('test', self.file)
+      module = imp.load_source(self.file, self.file)
     except:
       raise Exception(bcolors.FAIL + 'Unable to open test configuration file: ' + self.file + bcolors.ENDC)
 
-    try:
-      self.config.update(module.TestConfig)
-    except:
-      raise Exception(bcolors.FAIL + 'Project configuration must define the TestConfig variable: ' + self.file + bcolors.ENDC)
+    if module.__dict__.get('get_tests') is None:
+
+      try:
+        self.config.update(module.TestConfig)
+      except:
+          raise Exception(bcolors.FAIL + 'Project configuration must define the TestConfig variable: ' + self.file + bcolors.ENDC)
+
+    else:
+        testconfig = plptest.Testconfig(self.runner)
+        module.get_tests(testconfig)
+        self.config.update(testconfig.gen())
 
     top_testset = []
     result = top_testset
@@ -154,7 +156,6 @@ class CfgParser(object):
       topParent = Testset(self.runner, 'top', 'top')
       result = [topParent]
 
-
     if testsets != None:
       for testset in testsets:
         parent = parse_testset(top_testset, testset, topParent, self.runner, self.path, os.path.dirname(self.file))
@@ -163,10 +164,7 @@ class CfgParser(object):
     if files is not None:
         for file in files:
             file_path = os.path.join(os.path.dirname(self.file), file)
-            if file.find('.ini') != -1:
-                testset = IniParser(self.runner, file_path)
-            else:
-                testset = CfgParser(self.runner, file_path)
+            testset = CfgParser(self.runner, file_path)
             testset.parse(top_testset.struct)
 
     tests = self.config.get('tests')
@@ -176,125 +174,6 @@ class CfgParser(object):
         parse_test(top_testset, test, topParent, self.runner, self.path)
 
     return result
-
-
-class IniParser(object):
-
-  def __init__(self, runner, file):
-    self.file = file
-    self.runner = runner
-    self.path = os.path.dirname(self.file)
-
-  def getOptions(self, section):
-    result = []
-    fullDict = {}
-    #fullDict = dict(list(runConfig.getAll().items()) + list(self.userConf.items()))
-    #fullDict['config'] = runConfig.getDeprecatedString()
-    #if runConfig.get('flag') != None:
-    #  fullDict['flags'] = ' '.join(runConfig.get('flag'))
-    #else:
-    #  fullDict['flags'] = ''
-    for option in self.parser.options(section):
-      result.append([option, getOptionValue(self.parser.get(section, option))])
-        #, vars=fullDict))])
-    return result
-
-  def parse(self, topParent=None):
-
-    logging.debug("Starting parsing file (path: %s)" % (self.file))
-
-    config = configparser.SafeConfigParser(dict_type=collections.OrderedDict)
-    self.parser = config
-    config.optionxform = str
-    openedPaths = config.read(self.file)
-
-    if len(openedPaths) == 0:
-        logging.warning("Didn't manage to open file: %s" % (self.file))
-
-    testsets = {}
-    topTestset = None
-
-    for section in config.sections():
-
-      parent = None
-
-      sectionList = section.split(':')
-      if len(sectionList) < 2: raise Exception("Invalid section, must contains t least 2 items: [type:name]")
-      sectionType = sectionList[0]
-      if len(sectionList) > 2:
-        parentName = ':'.join(sectionList[1:len(sectionList)-1])
-        parent = testsets.get(parentName)
-      if parent == None: parent = topParent
-      name = sectionList[len(sectionList)-1]
-
-      if sectionType == 'testset':
-
-        testset = Testset(self.runner, name, self.path, parent)
-        testsets[name] = testset
-        if topTestset == None: topTestset = testset
-
-        for item in config.items(section):
-          if item[0] == 'files':
-            pass
-            files = getOptionValue(item[1]).split()
-            for childFile in files:
-              if childFile.find('.ini') != -1:
-                IniParser(self.runner, os.path.join(os.path.dirname(self.file), childFile)).parse(testset)
-              else:
-                CfgParser(self.runner, os.path.join(os.path.dirname(self.file), childFile)).parse(testset)
-          if item[0] == 'configs':
-            for conf in getOptionValue(item[1]).split():
-              testset.addConfigConstraint(pulpconfig.Configuration(useRegExp=True, name=conf))
-            #print (bcolors.FAIL + 'Caught an error while parsing test description file: ' + file + bcolors.ENDC)
-            #raise
-          else:
-            pass
-            #testset.addUserConfig(item[0], getOptionValue(item[1]))
-
-      elif sectionType == 'run':
-        # Deprecated type, just here for compatibility
-        pass
-
-      elif sectionType == 'test':
-        test = Test(self.runner, name, self.path, parent)
-        if topTestset == None: topTestset = test
-
-        for option, value in config.items(section, raw=True):
-          if option.find('command.') == 0:
-            test.addCommand([option.split('.')[1], value])
-          elif option == 'dir':
-            test.setDir(value)
-          elif option == 'configs':
-            for conf in value.split():
-              test.addConfigConstraint(conf)
-          elif option == 'tags':
-            for tag in value.split():
-              test.addTag(tag)
-          elif option == 'timeout':
-            test.setTimeout(int(value))
-          elif option == 'check':
-            for checker in value.split():
-              test.addChecker(checker)
-          elif option == 'parameters':
-            for param in value.split():
-              test.addParam(param)
-          elif option.find('probe') == 0:
-            pass
-            #probeName = option.split('[')[1].split(']')[0]
-            #if probes.get(probeName) == None:
-            #    probes[probeName] = Probe(probeName, testsuiteName, moduleName, testName)
-            #probeOption = option.split('[')[1].split(']')[1].split('.')[1]
-            #probes[probeName].setProp(probeOption, value)
-          else:
-            raise BaseException("Unknown item %s in test %s" % (option, self.name))
-
-      else:
-        raise Exception("Invalid section type: " + sectionType)
-
-    return topTestset
-
-
-
 
 
 
@@ -348,7 +227,7 @@ class TestRunner(object):
         self, nbThreads=1, server=False, stdout=False,
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
-        bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False):
+        bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False, properties=[], tags=[]):
 
         global test_runner
 
@@ -378,6 +257,7 @@ class TestRunner(object):
         self.cpu_load_checker_call_id = None
         self.dry_run = dry_run
         self.testplan = None
+        self.tags = tags
 
         test_runner = self
 
@@ -386,6 +266,14 @@ class TestRunner(object):
 
         if worker_pool == 'condor':
             self.worker_pool = plptest_condor.Condor_pool()
+
+        self.properties = {}
+        for prop in properties:
+          name, value = prop.split('=')
+          self.properties[name] = value
+
+    def get_property(self, name):
+      return self.properties.get(name)
 
     def testcase_result(self, testcase, status, test_name):
         if self.testplan is not None:
@@ -419,10 +307,7 @@ class TestRunner(object):
             reactor.stop()
 
     def addTestset(self, testset):
-        if testset.find('.ini') != -1:
-            self.tests += IniParser(self, testset).parse()
-        else:
-            self.tests += CfgParser(self, testset).parse()
+        self.tests += CfgParser(self, testset).parse()
 
         for test in self.tests:
             len = test.getMaxTestNameLen()

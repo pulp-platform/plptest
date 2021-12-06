@@ -122,6 +122,8 @@ parser.add_argument('command', metavar='CMD', type=str, nargs='*',
 parser.add_argument("--config", dest="config_name", default=None, help="specify the system configuration name")
 
 parser.add_argument("--config-def", dest="configDef", action="append", default=None, help="Specifies json files containing configurations definition")
+parser.add_argument("--property", dest="properties", action="append", default=[], help="Specifies property")
+parser.add_argument("--tag", dest="tags", action="append", default=[], help="Specifies tag")
 parser.add_argument("--testset", dest="testset", action="append", default=None, metavar="PATH", help="Path to the testset. Default: %(default)s")
 parser.add_argument("--cmd", dest="commands", action="append", default=None, metavar="PATH", help="Add command to be executed. Default: %(default)s")
 parser.add_argument("--gui", dest="gui", action="store_true", help="Opens user interface")
@@ -184,11 +186,24 @@ def command_handle():
 if len(args.command) == 0 and not args.gui:
   args.command.append('run')
 
+if os.environ.get('PLPTEST_DEFAULT_PROPERTIES') is not None:
+  properties = []
+  for prop in os.environ.get('PLPTEST_DEFAULT_PROPERTIES').split(' '):
+    properties.append(prop)
+
+  args.properties = properties + args.properties
+
+if os.environ.get('PMSIS_OS') is not None:
+  args.properties.append('os=%s' % os.environ.get('PMSIS_OS'))
+
+if os.environ.get('PMSIS_PLATFORM') is not None:
+  args.properties.append('platform=%s' % os.environ.get('PMSIS_PLATFORM'))
+
 runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average,
     bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp, commands=args.commands, dry_run=args.dry_run,
-    server=args.gui
+    server=args.gui, properties=args.properties, tags=args.tags
 )
 for testset in args.testset:
   runner.addTestset(testset)
