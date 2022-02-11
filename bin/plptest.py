@@ -75,7 +75,7 @@ class Test(object):
 
 class Sdk_test(Test):
 
-    def __init__(self, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None):
+    def __init__(self, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None):
 
         if params is None:
             params = []
@@ -93,6 +93,9 @@ class Sdk_test(Test):
             Shell('build', 'make all %s build_dir_ext=_%s' % (flags, build_dir)),
             Shell('run',   'make run %s build_dir_ext=_%s' % (flags, build_dir))
           ]
+
+          if checker is not None:
+            commands.append(Check('check', checker))
 
         super(Sdk_test, self).__init__(name=name, commands=commands, timeout=timeout, parent=parent, path=path, restrict=restrict, tags=tags,params=params, description=description, scores=scores, skip=skip, testcase=testcase)
 
@@ -182,3 +185,7 @@ class Testconfig(object):
 
   def get_tests(self):
     return self.config['tests'] 
+
+  def add_tag(self, tag, tests):
+      for name in tests:
+          self.get_test(name).add_tags([tag])

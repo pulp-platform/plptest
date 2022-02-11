@@ -227,7 +227,8 @@ class TestRunner(object):
         self, nbThreads=1, server=False, stdout=False,
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
-        bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False, properties=[], tags=[]):
+        bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False,
+        exclude_commands=None, properties=[], tags=[]):
 
         global test_runner
 
@@ -254,6 +255,7 @@ class TestRunner(object):
         self.bench_regexp = bench_regexp
         self.bench_csv_file = bench_csv_file
         self.commands = commands
+        self.exclude_commands = exclude_commands
         self.cpu_load_checker_call_id = None
         self.dry_run = dry_run
         self.testplan = None
@@ -406,7 +408,7 @@ class TestRunner(object):
         print (bcolors.OKBLUE + 'START'.ljust(6) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
         sys.stdout.flush()
 
-      testrun.run(reactor, self.testEnd, self.commands, self.dry_run, testrun)
+      testrun.run(reactor, self.testEnd, self.commands, self.exclude_commands, self.dry_run, testrun)
 
     def check_cpu_load(self):
       if len(self.runnings) >= self.nbThreads:

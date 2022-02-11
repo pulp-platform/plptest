@@ -800,7 +800,7 @@ class TestRun(protocol.ProcessProtocol):
 
             self.handle_cmd_end()
             
-    def run(self, reactor, callback=None, commands=None, dry_run=False, *kargs, **kwargs):
+    def run(self, reactor, callback=None, commands=None, exclude_commands=None, dry_run=False, *kargs, **kwargs):
 
         self.dry_run = dry_run
         self.callback = callback
@@ -817,13 +817,12 @@ class TestRun(protocol.ProcessProtocol):
 
         else:
 
-            if commands is None:
-                self.commands = self.test.commands.copy()
-            else:
-                self.commands = []
-                for test_command in self.test.commands:
-                    if test_command.name in commands:
-                        self.commands.append(test_command)
+            self.commands = []
+
+            for test_command in self.test.commands:
+
+                if (commands is None or test_command.name in commands) and (exclude_commands is None or not test_command.name in exclude_commands):
+                    self.commands.append(test_command)
 
             self.appendOutput('Running: ' + self.test.getFullName() + ' / ' +
                             self.config.get_config_name() + '\n')
