@@ -73,9 +73,12 @@ class Test(object):
     def skip_test(self, message):
         self.skip = message
 
+    def add_testcase(self, testcase):
+        self.testcase = testcase
+
 class Sdk_test(Test):
 
-    def __init__(self, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None):
+    def __init__(self, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None):
 
         if params is None:
             params = []
@@ -90,9 +93,18 @@ class Sdk_test(Test):
 
           commands = [
             Shell('clean', 'make clean %s build_dir_ext=_%s' % (flags, build_dir)),
+          ]
+
+          if gen is not None:
+            commands.append(Shell('gen', 'make %s %s build_dir_ext=_%s' % (gen, flags, build_dir)))
+
+          commands += [
             Shell('build', 'make all %s build_dir_ext=_%s' % (flags, build_dir)),
             Shell('run',   'make run %s build_dir_ext=_%s' % (flags, build_dir))
           ]
+
+          if check is not None:
+            commands.append(Shell('check', 'make %s %s build_dir_ext=_%s' % (check, flags, build_dir)))
 
           if checker is not None:
             commands.append(Check('check', checker))
