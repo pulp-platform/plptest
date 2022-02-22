@@ -175,12 +175,18 @@ class Testconfig(object):
   def __init__(self, runner):
     self.config = {}
     self.config['tests'] = []
+    self.config['testsets'] = []
     self.runner = runner
     self.tests = {}
+    self.testsets = {}
 
   def add_test(self, test):
     self.config['tests'].append(test)
     self.tests[test.name] = test
+
+  def add_testset(self, testset):
+    self.config['testsets'].append(testset)
+    self.testsets[testset.name] = testset
 
   def gen(self):
     return self.config
