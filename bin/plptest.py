@@ -99,8 +99,8 @@ class Sdk_test(Test):
             commands.append(Shell('gen', 'make %s %s build_dir_ext=_%s' % (gen, flags, build_dir)))
 
           commands += [
-            Shell('build', 'make all %s build_dir_ext=_%s' % (flags, build_dir)),
-            Shell('run',   'make run %s build_dir_ext=_%s' % (flags, build_dir))
+            Shell('build', 'make build image %s build_dir_ext=_%s' % (flags, build_dir)),
+            Shell('run',   'make flash_noforce run %s build_dir_ext=_%s' % (flags, build_dir))
           ]
 
           if check is not None:
