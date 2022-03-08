@@ -142,6 +142,8 @@ parser.add_argument("--db", dest="db", action='store_true', default=False, help=
 parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Specify worker pool")
 parser.add_argument("--score-csv-file", dest="score_csv_file", default=None, help="Specify CSV file for scores")
 parser.add_argument("--bench-csv-file", dest="bench_csv_file", default=None, help="Specify CSV file for benchmark results")
+parser.add_argument("--job-id", dest="job_id", default=None, type=int, help="Give the job ID when the testset is split into several jobs")
+parser.add_argument("--nb-jobs", dest="nb_jobs", default=None, type=int, help="Give the number of jobs when the testset is split into several jobs")
 parser.add_argument("--bench-regexp", dest="bench_regexp", default='.*@BENCH@(.*)@DESC@(.*)@', help="Specify regexp for extracting benchmark results")
 
 
@@ -204,7 +206,7 @@ runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average,
     bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp, commands=args.commands, exclude_commands=args.commands_exclude, dry_run=args.dry_run,
-    server=args.gui, properties=args.properties, tags=args.tags
+    server=args.gui, properties=args.properties, tags=args.tags, job_id=args.job_id, nb_jobs=args.nb_jobs
 )
 for testset in args.testset:
   runner.addTestset(testset)

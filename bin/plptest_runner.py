@@ -228,7 +228,7 @@ class TestRunner(object):
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
         bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False,
-        exclude_commands=None, properties=[], tags=[]):
+        exclude_commands=None, properties=[], tags=[], job_id=None, nb_jobs=None):
 
         global test_runner
 
@@ -260,6 +260,8 @@ class TestRunner(object):
         self.dry_run = dry_run
         self.testplan = None
         self.tags = tags
+        self.job_id = job_id
+        self.nb_jobs = nb_jobs
 
         test_runner = self
 
@@ -424,11 +426,7 @@ class TestRunner(object):
       return load < self.average_load
 
     def enqueueTestRun(self, testrun):
-      if not self.check_cpu_load():
-        self.pendings.append(testrun)
-        return
-
-      self.run(testrun)
+      self.pendings.append(testrun)
 
     def cpu_load_check(self):
       self.cpu_load_checker_call_id = reactor.callLater(1, self.cpu_load_check)
@@ -440,8 +438,6 @@ class TestRunner(object):
         self.testplan.dump()
 
     def runTests(self, tests, tests_re, callback=None, *args, **kwargs):
-
-      self.cpu_load_checker_call_id = reactor.callLater(1, self.cpu_load_check)
 
       self.runCompletionCallback = callback
       self.runCompletionArgs = args
@@ -466,6 +462,11 @@ class TestRunner(object):
                   test.run(config)
 
       self.enqueue_all = True
+
+      if self.job_id is not None:
+          self.pendings = self.pendings[self.job_id::self.nb_jobs]
+
+      self.cpu_load_check()
 
       self.check_completion()
 

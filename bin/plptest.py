@@ -78,7 +78,7 @@ class Test(object):
 
 class Sdk_test(Test):
 
-    def __init__(self, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None):
+    def __init__(self, config, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None):
 
         if params is None:
             params = []
@@ -90,6 +90,8 @@ class Sdk_test(Test):
         if len(commands) == 0:
 
           build_dir = name.replace(':', '_')
+
+          flags += ' PMSIS_OS=%s platform=%s' % (config.get('os'), config.get('platform'))
 
           commands = [
             Shell('clean', 'make clean %s build_dir_ext=_%s' % (flags, build_dir)),
@@ -111,6 +113,7 @@ class Sdk_test(Test):
 
         super(Sdk_test, self).__init__(name=name, commands=commands, timeout=timeout, parent=parent, path=path, restrict=restrict, tags=tags,params=params, description=description, scores=scores, skip=skip, testcase=testcase)
 
+        config.add_test(self)
 
 class Shell(object):
 
