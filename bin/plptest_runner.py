@@ -228,7 +228,8 @@ class TestRunner(object):
         maxOutputLen=-1, maxTimeout=-1, worker_pool=None,
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
         bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False,
-        exclude_commands=None, properties=[], tags=[], job_id=None, nb_jobs=None):
+        exclude_commands=None, properties=[], tags=[], job_id=None, nb_jobs=None,
+        flags=[]):
 
         global test_runner
 
@@ -262,6 +263,7 @@ class TestRunner(object):
         self.tags = tags
         self.job_id = job_id
         self.nb_jobs = nb_jobs
+        self.flags = flags
 
         test_runner = self
 
@@ -275,6 +277,8 @@ class TestRunner(object):
         for prop in properties:
           name, value = prop.split('=')
           self.properties[name] = value
+
+        
 
     def get_property(self, name):
       return self.properties.get(name)

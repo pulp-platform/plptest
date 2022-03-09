@@ -39,6 +39,8 @@ class Testset(object):
         self.testsets = testsets
         self.skip = skip
 
+    def add_file(self, file):
+        self.files.append(file)
 
 
 class Test(object):
@@ -76,6 +78,19 @@ class Test(object):
     def add_testcase(self, testcase):
         self.testcase = testcase
 
+class Sdk_testset(Testset):
+
+    def __init__(self, config, name, files=None, tests=None, testsets=None, parent=None, restrict=None, tags=None, description=None, parallel=True, skip=None):
+
+        super(Sdk_testset, self).__init__(name=name, files=files, tests=tests,
+            testsets=testsets, parent=parent, restrict=restrict, tags=tags, description=description,
+            parallel=parallel, skip=skip
+        )
+
+        config.add_testset(self)
+
+
+
 class Sdk_test(Test):
 
     def __init__(self, config, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None):
@@ -90,6 +105,9 @@ class Sdk_test(Test):
         if len(commands) == 0:
 
           build_dir = name.replace(':', '_')
+
+          if len(config.runner.flags) > 0:
+            flags += ' ' + ' '.join(config.runner.flags)
 
           flags += ' PMSIS_OS=%s platform=%s' % (config.get('os'), config.get('platform'))
 

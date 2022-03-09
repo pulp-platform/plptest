@@ -124,6 +124,7 @@ parser.add_argument("--config", dest="config_name", default=None, help="specify 
 parser.add_argument("--config-def", dest="configDef", action="append", default=None, help="Specifies json files containing configurations definition")
 parser.add_argument("--property", dest="properties", action="append", default=[], help="Specifies property")
 parser.add_argument("--tag", dest="tags", action="append", default=[], help="Specifies tag")
+parser.add_argument("--flags", dest="flags", action="append", default=[], help="Specifies flags")
 parser.add_argument("--testset", dest="testset", action="append", default=None, metavar="PATH", help="Path to the testset. Default: %(default)s")
 parser.add_argument("--cmd", dest="commands", action="append", default=None, metavar="PATH", help="Add command to be executed. Default: %(default)s")
 parser.add_argument("--cmd-exclude", dest="commands_exclude", action="append", default=None, metavar="PATH", help="Add command to be excluded. Default: %(default)s")
@@ -206,7 +207,7 @@ runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average,
     bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp, commands=args.commands, exclude_commands=args.commands_exclude, dry_run=args.dry_run,
-    server=args.gui, properties=args.properties, tags=args.tags, job_id=args.job_id, nb_jobs=args.nb_jobs
+    server=args.gui, properties=args.properties, tags=args.tags, job_id=args.job_id, nb_jobs=args.nb_jobs, flags=args.flags
 )
 for testset in args.testset:
   runner.addTestset(testset)
