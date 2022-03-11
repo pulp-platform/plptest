@@ -207,7 +207,7 @@ runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average,
     bench_csv_file=bench_csv_file, bench_regexp=args.bench_regexp, commands=args.commands, exclude_commands=args.commands_exclude, dry_run=args.dry_run,
-    server=args.gui, properties=args.properties, tags=args.tags, job_id=args.job_id, nb_jobs=args.nb_jobs, flags=args.flags
+    server=args.gui, properties=args.properties, tags=args.tags, job_id=args.job_id % args.nb_jobs, nb_jobs=args.nb_jobs, flags=args.flags
 )
 for testset in args.testset:
   runner.addTestset(testset)
