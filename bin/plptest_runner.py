@@ -467,7 +467,7 @@ class TestRunner(object):
 
       self.enqueue_all = True
 
-      if self.job_id is not None:
+      if self.nb_jobs > 1:
           self.pendings = self.pendings[self.job_id::self.nb_jobs]
 
       self.cpu_load_check()
