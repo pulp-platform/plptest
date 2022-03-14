@@ -104,7 +104,7 @@ class Sdk_test(Test):
 
         if len(commands) == 0:
 
-          flags = config.get_all_flags(name)
+          flags += config.get_all_flags(name)
 
           commands = [
             Shell('clean', 'make clean %s' % (flags)),
