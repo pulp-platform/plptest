@@ -93,7 +93,7 @@ class Sdk_testset(Testset):
 
 class Sdk_test(Test):
 
-    def __init__(self, config, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None):
+    def __init__(self, config, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None, run=None):
 
         if params is None:
             params = []
@@ -104,27 +104,26 @@ class Sdk_test(Test):
 
         if len(commands) == 0:
 
-          build_dir = name.replace(':', '_')
-
-          if len(config.runner.flags) > 0:
-            flags += ' ' + ' '.join(config.runner.flags)
-
-          flags += ' PMSIS_OS=%s platform=%s' % (config.get('os'), config.get('platform'))
+          flags = config.get_all_flags(name)
 
           commands = [
-            Shell('clean', 'make clean %s build_dir_ext=_%s' % (flags, build_dir)),
+            Shell('clean', 'make clean %s' % (flags)),
           ]
 
           if gen is not None:
-            commands.append(Shell('gen', 'make %s %s build_dir_ext=_%s' % (gen, flags, build_dir)))
+            commands.append(Shell('gen', 'make %s %s' % (gen, flags)))
 
           commands += [
-            Shell('build', 'make build image %s build_dir_ext=_%s' % (flags, build_dir)),
-            Shell('run',   'make flash_noforce run %s build_dir_ext=_%s' % (flags, build_dir))
+            Shell('build', 'make build image %s' % (flags)),
           ]
 
+          if run is None:
+            commands.append(Shell('run',   'make flash_noforce run %s' % (flags)))
+          else:
+            commands.append(Shell('run',   'make %s' % run))
+
           if check is not None:
-            commands.append(Shell('check', 'make %s %s build_dir_ext=_%s' % (check, flags, build_dir)))
+            commands.append(Shell('check', 'make %s %s' % (check, flags)))
 
           if checker is not None:
             commands.append(Check('check', checker))
@@ -228,3 +227,17 @@ class Testconfig(object):
   def add_tag(self, tag, tests):
       for name in tests:
           self.get_test(name).add_tags([tag])
+
+  def get_all_flags(self, name):
+      flags = ''
+
+      build_dir = name.replace(':', '_')
+
+      if len(self.runner.flags) > 0:
+        flags += ' ' + ' '.join(self.runner.flags)
+
+      flags += ' PMSIS_OS=%s platform=%s' % (self.get('os'), self.get('platform'))
+
+      flags += ' build_dir_ext=_%s' % build_dir
+
+      return flags
