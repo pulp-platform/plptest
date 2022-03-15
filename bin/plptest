@@ -197,12 +197,6 @@ if os.environ.get('PLPTEST_DEFAULT_PROPERTIES') is not None:
 
   args.properties = properties + args.properties
 
-if os.environ.get('PMSIS_OS') is not None:
-  args.properties.append('os=%s' % os.environ.get('PMSIS_OS'))
-
-if os.environ.get('PMSIS_PLATFORM') is not None:
-  args.properties.append('platform=%s' % os.environ.get('PMSIS_PLATFORM'))
-
 runner = TestRunner(
     nbThreads=args.threads, stdout=args.stdout, safe_stdout=args.safe_stdout, maxOutputLen=args.maxOutputLen,
     maxTimeout=args.maxTimeout, worker_pool=args.worker_pool, db=args.db, average_load=args.load_average,

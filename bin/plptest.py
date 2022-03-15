@@ -236,7 +236,11 @@ class Testconfig(object):
       if len(self.runner.flags) > 0:
         flags += ' ' + ' '.join(self.runner.flags)
 
-      flags += ' PMSIS_OS=%s platform=%s' % (self.get('os'), self.get('platform'))
+      if self.get('os') is not None:
+          flags += ' PMSIS_OS=%s' % self.get('os')
+
+      if self.get('platform') is not None:
+          flags += ' platform=%s' % self.get('platform')
 
       flags += ' build_dir_ext=_%s' % build_dir
 

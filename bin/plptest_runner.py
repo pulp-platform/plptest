@@ -278,6 +278,12 @@ class TestRunner(object):
           name, value = prop.split('=')
           self.properties[name] = value
 
+        if self.properties.get('os') is None and os.environ.get('PMSIS_OS') is not None:
+          self.properties['os'] = os.environ.get('PMSIS_OS')
+
+        if self.properties.get('platform') is None and os.environ.get('PMSIS_PLATFORM') is not None:
+          self.properties['platform'] = os.environ.get('PMSIS_PLATFORM')
+
         
 
     def get_property(self, name):
