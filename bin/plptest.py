@@ -18,7 +18,8 @@
 
 class Testset(object):
 
-    def __init__(self, name, files=None, tests=None, testsets=None, parent=None, restrict=None, tags=None, description=None, parallel=True, skip=None):
+    def __init__(self, name, files=None, tests=None, testsets=None, parent=None, restrict=None,
+            tags=None, description=None, parallel=True, skip=None, exclude=None):
         if testsets is None:
             testsets = []
         if tests is None:
@@ -37,7 +38,14 @@ class Testset(object):
         self.parallel = parallel
         self.tests = tests
         self.testsets = testsets
-        self.skip = skip
+        self.skip_message = skip  
+        self.exclude_message = exclude
+
+    def skip(self, message):
+        self.skip_message = message
+
+    def exclude(self, message):
+        self.exclude_message = message
 
     def add_file(self, file):
         self.files.append(file)
@@ -45,7 +53,9 @@ class Testset(object):
 
 class Test(object):
 
-    def __init__(self, name, commands=None, timeout=-1, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None):
+    def __init__(self, name, commands=None, timeout=-1, parent=None, path=None, restrict=None,
+            tags=None, params=None, description=None, scores=None, skip=None, testcase=None,
+            exclude=None):
 
         if tags is None:
             tags = []
@@ -66,25 +76,33 @@ class Test(object):
         self.params = params
         self.description = description
         self.scores = scores
-        self.skip = skip
+        self.skip_message = skip
+        self.exclude_message = exclude
         self.testcase = testcase
 
     def add_tags(self, tags):
         self.tags += tags
 
     def skip_test(self, message):
-        self.skip = message
+        self.skip_message = message
+
+    def skip(self, message):
+        self.skip_message = message
+
+    def exclude(self, message):
+        self.exclude_message = message
 
     def add_testcase(self, testcase):
         self.testcase = testcase
 
 class Sdk_testset(Testset):
 
-    def __init__(self, config, name, files=None, tests=None, testsets=None, parent=None, restrict=None, tags=None, description=None, parallel=True, skip=None):
+    def __init__(self, config, name, files=None, tests=None, testsets=None, parent=None,
+            restrict=None, tags=None, description=None, parallel=True, skip=None, exclude=None):
 
         super(Sdk_testset, self).__init__(name=name, files=files, tests=tests,
             testsets=testsets, parent=parent, restrict=restrict, tags=tags, description=description,
-            parallel=parallel, skip=skip
+            parallel=parallel, skip=skip, exclude=exclude
         )
 
         config.add_testset(self)
@@ -93,7 +111,10 @@ class Sdk_testset(Testset):
 
 class Sdk_test(Test):
 
-    def __init__(self, config, name, flags='', commands=None, timeout=1000000, parent=None, path=None, restrict=None, tags=None, params=None, description=None, scores=None, skip=None, testcase=None, checker=None, gen=None, check=None, run=None):
+    def __init__(self, config, name, flags='', commands=None, timeout=1000000, parent=None,
+            path=None, restrict=None, tags=None, params=None, description=None, scores=None,
+            skip=None, testcase=None, checker=None, gen=None, check=None, run=None,
+            exclude=None):
 
         if params is None:
             params = []
@@ -128,7 +149,10 @@ class Sdk_test(Test):
           if checker is not None:
             commands.append(Check('check', checker))
 
-        super(Sdk_test, self).__init__(name=name, commands=commands, timeout=timeout, parent=parent, path=path, restrict=restrict, tags=tags,params=params, description=description, scores=scores, skip=skip, testcase=testcase)
+        super(Sdk_test, self).__init__(name=name, commands=commands, timeout=timeout, parent=parent,
+            path=path, restrict=restrict, tags=tags,params=params, description=description,
+            scores=scores, skip=skip, testcase=testcase, exclude=exclude
+        )
 
         config.add_test(self)
 
@@ -223,6 +247,9 @@ class Testconfig(object):
 
   def get_tests(self):
     return self.config['tests'] 
+
+  def get_testsets(self):
+    return self.config['testsets'] 
 
   def add_tag(self, tag, tests):
       for name in tests:

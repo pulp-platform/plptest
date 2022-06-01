@@ -224,6 +224,7 @@ class TestCommon(object):
         self.addedConfigs = []
         self.restrict = None
         self.skip = None
+        self.exclude = None
         self.user = user
         self.is_testset = is_testset
 
@@ -233,6 +234,15 @@ class TestCommon(object):
 
         if self.parent is not None:
             return self.parent.get_skip()
+
+        return None
+
+    def get_exclude(self):
+        if self.exclude is not None:
+            return self.exclude
+
+        if self.parent is not None:
+            return self.parent.get_exclude()
 
         return None
 
@@ -561,9 +571,12 @@ class TestRun(protocol.ProcessProtocol):
         self.outputLen = 0
         self.status = False
         self.skip = None
+        self.exclude = None
         self.reachedMaxOutputSize = False
         self.closed = False
         self.id = runner.get_test_id()
+        self.skip = self.test.skip
+        self.exclude = self.test.exclude
 
     def check_deps(self):
         self.test.check_deps()
@@ -809,10 +822,9 @@ class TestRun(protocol.ProcessProtocol):
         self.reactor = reactor
         self.startTime = datetime.now()
 
-        if self.test.skip is not None:
+        if self.skip is not None or self.exclude is not None:
 
             self.duration = 0
-            self.skip = self.test.skip
             self.terminate()
 
         else:

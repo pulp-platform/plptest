@@ -73,7 +73,8 @@ def parse_testset(top_testset, testset, topParent, runner, path, rootdir):
 
   testset.struct.set_restrict(testset.restrict)
   testset.struct.set_parallel(testset.parallel)
-  testset.struct.skip = testset.skip
+  testset.struct.skip = testset.skip_message
+  testset.struct.exclude = testset.exclude_message
 
   for file in testset.files:
     CfgParser(runner, os.path.join(rootdir, file)).parse(testset.struct)
@@ -105,9 +106,12 @@ def parse_test(top_testset, test, topParent, runner, path):
   test.struct.set_restrict(test.restrict)
   test.struct.set_testcase(test.testcase)
   test.struct.scores = test.scores
-  test.struct.skip = test.skip
-  if test.skip is None and topParent is not None:
+  test.struct.skip = test.skip_message
+  test.struct.exclude = test.exclude_message
+  if test.skip_message is None and topParent is not None:
     test.struct.skip = topParent.get_skip()
+  if test.exclude_message is None and topParent is not None:
+    test.struct.exclude = topParent.get_exclude()
 
   test.struct.setTimeout(int(test.timeout))
 
@@ -373,17 +377,21 @@ class TestRunner(object):
 
     def testEnd(self, testrun):
 
-      if testrun.skip is not None:
-        testStr = bcolors.WARNING + 'SKIP: '.ljust(6) + bcolors.ENDC
+      if testrun.exclude is not None:
+        testStr = bcolors.HEADER + 'EXCLUDE '.ljust(8) + bcolors.ENDC
+      elif testrun.skip is not None:
+        testStr = bcolors.WARNING + 'SKIP '.ljust(8) + bcolors.ENDC
       elif testrun.status:
-        testStr = bcolors.OKGREEN + 'OK: '.ljust(6) + bcolors.ENDC
+        testStr = bcolors.OKGREEN + 'OK '.ljust(8) + bcolors.ENDC
       else:
-        testStr = bcolors.FAIL + 'KO: '.ljust(6) + bcolors.ENDC
+        testStr = bcolors.FAIL + 'KO '.ljust(8) + bcolors.ENDC
       print (testStr + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
       sys.stdout.flush()
 
       test = self.plpobjects.getTest(testrun.test.getFullName())
-      testResult = plpobjects.TestRun(self.plpobjects, test, testrun.status, testrun.duration, testrun.config, testrun.log, build=self.build, skip=testrun.skip)
+      testResult = plpobjects.TestRun(self.plpobjects, test, testrun.status, testrun.duration,
+          testrun.config, testrun.log, build=self.build, skip=testrun.skip, exclude=testrun.exclude
+      )
 
       if testrun in self.runnings:
         self.runnings.remove(testrun)
@@ -416,8 +424,8 @@ class TestRunner(object):
       if self.uiServer is not None and self.uiServer.handler is not None:
         self.uiServer.handler.transport.write(pickle.dumps(TestRunning(testrun.test.getFullName(), testrun.config)))
 
-      if testrun.skip is None:
-        print (bcolors.OKBLUE + 'START'.ljust(6) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
+      if testrun.skip is None and testrun.exclude is None:
+        print (bcolors.OKBLUE + 'START'.ljust(8) + bcolors.ENDC + bcolors.BOLD + testrun.test.getFullName().ljust(self.maxTestNameLen + 5) + bcolors.ENDC + ' %s' % (testrun.config))
         sys.stdout.flush()
 
       testrun.run(reactor, self.testEnd, self.commands, self.exclude_commands, self.dry_run, testrun)
