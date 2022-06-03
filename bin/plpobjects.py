@@ -282,7 +282,7 @@ class Test(object):
 
         if runs is not None:
             for run in runs:
-                if (build is None or run.build == build) and run.skip is not None:
+                if (build is None or run.build == build) and run.is_skipped():
                     nbSkipped += 1
 
         for test in self.tests:
@@ -401,7 +401,7 @@ class Test(object):
         for run in self.runs:
 
             testFile.write('  <testcase classname="%s" name="%s" time="%f">\n' % (run.config, test_prefix + ':' + name, run.duration))
-            if run.skip is not None:
+            if run.is_skipped():
                 testFile.write('    <skipped message="%s"/>\n' % run.skip)
             else:
                 if run.success:
@@ -473,6 +473,9 @@ class TestRun(object):
                 self.commit()
         else:
             self.test = Test(name)
+
+    def is_skipped(self):
+        return self.skip is not None and self.exclude is None
 
     def commit(self):
         if self.pobj.db is not None:
