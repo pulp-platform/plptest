@@ -382,7 +382,8 @@ class Test(object):
                     nbTests = self.getNbTests()
                     nbSuccess = self.getNbSuccess()
                     nbSkipped = self.getNbSkipped()
-                    nbErrors = nbTests - nbSuccess
+                    nbExcluded = self.getNbExcluded()
+                    nbErrors = nbTests - nbSuccess - nbExcluded
                     testFile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
                     testFile.write('<testsuite skipped="%d" errors="%d" failures="%d" name="%s" tests="%d" time="%f">\n' % (nbSkipped, nbErrors, nbErrors, name, nbTests, self.getDuration()))
                     for testCase in self.tests:
@@ -400,25 +401,26 @@ class Test(object):
 
         for run in self.runs:
 
-            testFile.write('  <testcase classname="%s" name="%s" time="%f">\n' % (run.config, test_prefix + ':' + name, run.duration))
-            if run.is_skipped():
-                testFile.write('    <skipped message="%s"/>\n' % run.skip)
-            else:
-                if run.success:
-                    testFile.write('    <success/>\n')
+            if not run.is_excluded():
+                testFile.write('  <testcase classname="%s" name="%s" time="%f">\n' % (run.config, test_prefix + ':' + name, run.duration))
+                if run.is_skipped():
+                    testFile.write('    <skipped message="%s"/>\n' % run.skip)
                 else:
-                    testFile.write('    <failure>\n')
-                    for line in run.log:
-                        RE_XML_ILLEGAL = u'([\u0000-\u0008\u000b-\u000c\u000e-\u001f\ufffe-\uffff])' + \
-                                        u'|' + \
-                                        u'([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])' % \
-                                        (chr(0xd800),chr(0xdbff),chr(0xdc00),chr(0xdfff),
-                                        chr(0xd800),chr(0xdbff),chr(0xdc00),chr(0xdfff),
-                                        chr(0xd800),chr(0xdbff),chr(0xdc00),chr(0xdfff))
-                        xmlLine = re.sub(RE_XML_ILLEGAL, "", escape(line))
-                        testFile.write(xmlLine)
-                    testFile.write('</failure>\n')
-            testFile.write('  </testcase>\n')
+                    if run.success:
+                        testFile.write('    <success/>\n')
+                    else:
+                        testFile.write('    <failure>\n')
+                        for line in run.log:
+                            RE_XML_ILLEGAL = u'([\u0000-\u0008\u000b-\u000c\u000e-\u001f\ufffe-\uffff])' + \
+                                            u'|' + \
+                                            u'([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])' % \
+                                            (chr(0xd800),chr(0xdbff),chr(0xdc00),chr(0xdfff),
+                                            chr(0xd800),chr(0xdbff),chr(0xdc00),chr(0xdfff),
+                                            chr(0xd800),chr(0xdbff),chr(0xdc00),chr(0xdfff))
+                            xmlLine = re.sub(RE_XML_ILLEGAL, "", escape(line))
+                            testFile.write(xmlLine)
+                        testFile.write('</failure>\n')
+                testFile.write('  </testcase>\n')
 
 class Config_reg_report(object):
 
@@ -476,6 +478,9 @@ class TestRun(object):
 
     def is_skipped(self):
         return self.skip is not None and self.exclude is None
+
+    def is_excluded(self):
+        return self.exclude is not None
 
     def commit(self):
         if self.pobj.db is not None:
