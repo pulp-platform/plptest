@@ -233,7 +233,7 @@ class TestRunner(object):
         db=False, pobjs=None, build=None, average_load=None, safe_stdout=False, home=None,
         bench_csv_file=None, bench_regexp=None, commands=None, dry_run=False,
         exclude_commands=None, properties=[], tags=[], job_id=None, nb_jobs=None,
-        flags=[]):
+        flags=[], skip_tests=None):
 
         global test_runner
 
@@ -268,6 +268,7 @@ class TestRunner(object):
         self.job_id = job_id
         self.nb_jobs = nb_jobs
         self.flags = flags
+        self.skip_tests = skip_tests
 
         test_runner = self
 
@@ -345,6 +346,10 @@ class TestRunner(object):
       reactor.callLater(1, self.command_callback)
 
     def start(self, callback=None, *args, **kwargs):
+
+      if self.skip_tests is not None:
+        for test in self.tests:
+          test.skip_tests(self.skip_tests)
 
       self.command_callback = callback
 

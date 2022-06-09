@@ -383,6 +383,17 @@ class Testset(TestCommon):
         for child in self.childs:
             child.show()
 
+    def skip_tests(self, tests):
+
+        name = self.getFullName()
+
+        for test in tests:
+            if name == test:
+                self.skip = "Skipped from command line"
+
+        for child in self.childs:
+            child.skip_tests(tests)
+
     def score(self, table=None, file=None):
         error = False
         score = 0.0
@@ -444,6 +455,13 @@ class Test(TestCommon):
 
         if parent is not None:
             parent.regChild(self)
+
+    def skip_tests(self, tests):
+        name = self.getFullName()
+
+        for test in tests:
+            if name == test:
+                self.skip = "Skipped from command line"
 
     def set_testcase(self, testcase):
         self.testcase = testcase
