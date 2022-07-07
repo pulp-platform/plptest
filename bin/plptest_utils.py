@@ -271,12 +271,6 @@ class TestCommon(object):
     def isActive(self):
         return self.isActive
 
-    def isActiveForConfig(self, config):
-        if self.parent is not None and \
-                not self.parent.isActiveForConfig(config):
-            return False
-        return self.activeForConfig.get(config.__str__())
-
     def getFullName(self):
         if self.parent is None:
             return self.name
@@ -318,8 +312,6 @@ class TestCommon(object):
         return tests
 
     def getNbTests(self, config):
-        if not self.isActiveForConfig(config):
-            return 0
         if len(self.childs) == 0:
             return 1
         else:
@@ -423,9 +415,6 @@ class Testset(TestCommon):
             return (error, None, 0)
 
     def run(self, config):
-        if not self.isActiveForConfig(config):
-            return
-
         if self.parallel:
             for child in self.childs:
                 child.run(config)
@@ -541,8 +530,6 @@ class Test(TestCommon):
             return (error, None, 0)
 
     def get_testrun(self, config):
-        if not self.isActiveForConfig(config):
-            return None
         return TestRun(self.runner, self, config)
 
     def check_deps(self):
@@ -704,17 +691,18 @@ class TestRun(protocol.ProcessProtocol):
         self.close(kill=True)
 
     def timeoutToTime(self, cycles):
-        nb_cores = 1
-        platform = self.config.get('platform')
-        convert_func = self.config.get('%s/cycles_to_seconds' %
-                                       platform)
+        return int(cycles)
+        # nb_cores = 1
+        # platform = self.config.get('platform')
+        # convert_func = self.config.get('%s/cycles_to_seconds' %
+        #                                platform)
 
-        if convert_func is not None:
-            timeout = eval(convert_func)
-        else:
-            timeout = int(cycles)
+        # if convert_func is not None:
+        #     timeout = eval(convert_func)
+        # else:
+        #     timeout = int(cycles)
 
-        return timeout
+        # return timeout
 
     def runCommand(self):
 
@@ -733,11 +721,12 @@ class TestRun(protocol.ProcessProtocol):
 
             cmdDict = {'config': self.config}
 
-            if self.config.get('flag') is not None:
-                pass
-#               cmdDict['flags'] = ' '.join(runConfig.get('flag'))
-            else:
-                cmdDict['flags'] = ''
+#             if self.config.get('flag') is not None:
+#                 pass
+# #               cmdDict['flags'] = ' '.join(runConfig.get('flag'))
+#             else:
+            
+            cmdDict['flags'] = ''
 
             cmd = cmd.cmd % cmdDict
 
@@ -765,12 +754,12 @@ class TestRun(protocol.ProcessProtocol):
 
 
             testEnv = os.environ.copy()
-            testEnv['PULP_CURRENT_CONFIG'] = self.config.get_name()
+            testEnv['PULP_CURRENT_CONFIG'] = self.config
 
             testEnv['PLPTEST_RUN_ID'] = str(self.id)
             testEnv['PLPTEST_PATH'] = self.getExecPath()
             testEnv['PLPTEST_NAME'] = self.test.getFullName()
-            testEnv['PLPTEST_CONFIG'] = self.config.get_name()
+            testEnv['PLPTEST_CONFIG'] = self.config
 
             install_dir = self.runner.home
             if install_dir is None:
@@ -855,7 +844,7 @@ class TestRun(protocol.ProcessProtocol):
                     self.commands.append(test_command)
 
             self.appendOutput('Running: ' + self.test.getFullName() + ' / ' +
-                            self.config.get_config_name() + '\n')
+                            self.config + '\n')
 
             self.timeout_call_id = None
 

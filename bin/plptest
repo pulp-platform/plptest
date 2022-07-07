@@ -18,7 +18,6 @@
 #
 
 
-
 import argparse
 import os
 import logging
@@ -206,12 +205,15 @@ runner = TestRunner(
 for testset in args.testset:
   runner.addTestset(testset)
 
-if args.config_name is None:
-  for config in plpconf.get_configs_from_env():
-    runner.addConfig(config)
-else:
-  config = plpconf.get_config_from_tag(args.config_name)
-  runner.addConfig(config)
+
+runner.addConfig("default")
+# if args.config_name is None:
+#   for config in plpconf.get_configs_from_env():
+#     print (config)
+#     runner.addConfig(config)
+# else:
+#   config = plpconf.get_config_from_tag(args.config_name)
+#   runner.addConfig(config)
 
 
 
