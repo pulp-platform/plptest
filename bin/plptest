@@ -22,7 +22,6 @@
 import argparse
 import os
 import logging
-import pulp_config as plpconf
 try:
   import psutil
 except:
