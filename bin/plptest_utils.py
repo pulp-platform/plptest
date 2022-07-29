@@ -247,18 +247,13 @@ class TestCommon(object):
         return None
 
     def checkConfig(self, config):
-
         if not self.is_testset and len(self.runner.tags) != 0 and self.user is not None:
             self.isActive = len(set(self.runner.tags).intersection(self.user.tags)) != 0
             if not self.isActive:
                 return
+        else:
+            self.isActive = True
 
-        try:
-            self.activeForConfig[config.__str__()] = \
-                self.restrict is None or \
-                eval(self.restrict)
-        except:
-            self.activeForConfig[config.__str__()] = False
         for child in self.childs:
             child.checkConfig(config)
         if self.getNbTests(config) != 0:
@@ -268,7 +263,7 @@ class TestCommon(object):
         self.addedConfigs.append(config)
         self.checkConfig(config)
 
-    def isActive(self):
+    def is_active(self):
         return self.isActive
 
     def getFullName(self):
@@ -312,6 +307,9 @@ class TestCommon(object):
         return tests
 
     def getNbTests(self, config):
+        if not self.is_active():
+            return 0
+
         if len(self.childs) == 0:
             return 1
         else:
@@ -415,6 +413,9 @@ class Testset(TestCommon):
             return (error, None, 0)
 
     def run(self, config):
+        if not self.is_active():
+            return 0
+
         if self.parallel:
             for child in self.childs:
                 child.run(config)
@@ -530,6 +531,9 @@ class Test(TestCommon):
             return (error, None, 0)
 
     def get_testrun(self, config):
+        if not self.is_active():
+            return None
+
         return TestRun(self.runner, self, config)
 
     def check_deps(self):
@@ -653,7 +657,7 @@ class TestRun(protocol.ProcessProtocol):
             for line in self.log.splitlines():
                 bench = pattern.match(line)
                 if bench is not None:
-                    key, value = bench.group(1).split('=')
+                    key, value = bench.group(1).rsplit('=', 1)
                     self.runner.bench_csv_file[key] = [value, bench.group(2)]
 
         if self.test.testcase is not None:
