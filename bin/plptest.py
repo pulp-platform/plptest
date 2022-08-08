@@ -139,7 +139,7 @@ class Sdk_test(Test):
           ]
 
           if run is None:
-            commands.append(Shell('run',   'make flash_noforce run %s' % (flags)))
+            commands.append(Shell('run',   'make flash_noforce exec %s' % (flags)))
           else:
             commands.append(Shell('run',   'make %s' % run))
 
