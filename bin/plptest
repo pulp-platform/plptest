@@ -80,7 +80,7 @@ def score(tests):
   table.align = "l"
 
   for testset in tests:
-    (test_error, test_score, test_nb_score) = testset.score(table=table)
+    (test_error, test_score, test_nb_score) = testset.score(table=table, score_name=args.score_name)
 
     error = error or test_error
 
@@ -141,6 +141,7 @@ parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Se
 parser.add_argument("--db", dest="db", action='store_true', default=False, help="Activate Pulp database access")
 parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Specify worker pool")
 parser.add_argument("--score-csv-file", dest="score_csv_file", default=None, help="Specify CSV file for scores")
+parser.add_argument("--score-name", dest="score_name", default='score', help="Specify name for scores")
 parser.add_argument("--bench-csv-file", dest="bench_csv_file", default=None, help="Specify CSV file for benchmark results")
 parser.add_argument("--job-id", dest="job_id", default=0, type=int, help="Give the job ID when the testset is split into several jobs")
 parser.add_argument("--nb-jobs", dest="nb_jobs", default=1, type=int, help="Give the number of jobs when the testset is split into several jobs")

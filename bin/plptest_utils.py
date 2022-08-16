@@ -384,12 +384,12 @@ class Testset(TestCommon):
         for child in self.childs:
             child.skip_tests(tests)
 
-    def score(self, table=None, file=None):
+    def score(self, table=None, file=None, score_name='score'):
         error = False
         score = 0.0
         nb_score = 0
         for child in self.childs:
-            (child_error, child_score, child_nb_score) = child.score(table=table, file=file)
+            (child_error, child_score, child_nb_score) = child.score(table=table, file=file, score_name=score_name)
 
             error = error or child_error
 
@@ -402,7 +402,7 @@ class Testset(TestCommon):
         if nb_score > 0:
             score = score / nb_score
 
-            plot = plptest_bench.Jenkins_plot(self.getFullName() + '.score.csv')
+            plot = plptest_bench.Jenkins_plot(self.getFullName() + f'.{score_name}.csv')
             plot.append('score', str(score))
             plot.gen()
 
@@ -470,7 +470,7 @@ class Test(TestCommon):
     def show(self):
         print (self.name)
 
-    def score(self, table=None, file=None):
+    def score(self, table=None, file=None, score_name=None):
 
         if self.runner.bench_csv_file is None:
             return (False, None, 0)
@@ -519,7 +519,7 @@ class Test(TestCommon):
             if nb_score > 0:
                 total_score = total_score / nb_score
 
-            plot = plptest_bench.Jenkins_plot(self.getFullName() + '.score.csv')
+            plot = plptest_bench.Jenkins_plot(self.getFullName() + f'.{score_name}.csv')
             plot.append('score', str(total_score))
             plot.gen()
 
