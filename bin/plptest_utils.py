@@ -27,6 +27,10 @@ from prettytable import PrettyTable
 import math
 import plptest_bench
 import psutil
+import openpyxl
+
+
+
 
 class Command(object):
 
@@ -384,12 +388,13 @@ class Testset(TestCommon):
         for child in self.childs:
             child.skip_tests(tests)
 
-    def score(self, table=None, file=None, score_name='score'):
+    def score(self, table=None, file=None, score_name='score', workbook=None):
         error = False
         score = 0.0
         nb_score = 0
         for child in self.childs:
-            (child_error, child_score, child_nb_score) = child.score(table=table, file=file, score_name=score_name)
+            (child_error, child_score, child_nb_score) = child.score(table=table, file=file,
+                score_name=score_name, workbook=workbook)
 
             error = error or child_error
 
@@ -405,6 +410,16 @@ class Testset(TestCommon):
             plot = plptest_bench.Jenkins_plot(self.getFullName() + f'.{score_name}.csv')
             plot.append('score', str(score))
             plot.gen()
+
+            if workbook is not None:
+
+                ws = workbook.get_sheet()
+                print (ws)
+                table_name = self.getFullName()
+                table = ws.get_table(table_name)
+                print (ws)
+                table.add(score)
+                print (ws)
 
             return (error, score, 1)
 
@@ -470,7 +485,7 @@ class Test(TestCommon):
     def show(self):
         print (self.name)
 
-    def score(self, table=None, file=None, score_name=None):
+    def score(self, table=None, file=None, score_name=None, workbook=None):
 
         if self.runner.bench_csv_file is None:
             return (False, None, 0)
@@ -523,6 +538,12 @@ class Test(TestCommon):
             plot.append('score', str(total_score))
             plot.gen()
 
+            if workbook is not None:
+
+                ws = workbook.get_sheet()
+                table_name = self.getFullName()
+                table = ws.get_table(table_name)
+                table.add(total_score)
 
             return (error, total_score, 1)
 

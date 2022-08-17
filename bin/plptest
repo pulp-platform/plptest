@@ -27,6 +27,7 @@ except:
   pass
 import csv
 import collections
+import datetime
 
 # In case gtk3 is not available just skip gui
 try:
@@ -35,6 +36,7 @@ except:
   pass
 
 from plptest_runner import *
+import openpyxl
 
 
 
@@ -50,6 +52,152 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+class Worktable():
+
+    def __init__(self, name, parent, ws, first_row, last_row, first_column, last_column, commit):
+        self.name = name
+        self.first_row = first_row
+        self.last_row = last_row
+        self.first_column = first_column
+        self.last_column = last_column
+        self.ws = ws
+        self.parent = parent
+        self.commit = commit
+
+    def add(self, score):
+        row = [self.commit, datetime.now(), score, '']
+        for i in range(0, len(row)):
+            self.ws.cell(row=self.last_row+1, column=self.first_column+i, value=row[i])
+
+        self.last_row += 1
+
+    def __str__(self):
+        return f'{self.first_row} -> {self.last_row}, {self.first_column} -> {self.last_column}'
+
+class Worksheet():
+
+    def __init__(self, name, ws, commit):
+        self.name = name
+        self.tables = collections.OrderedDict({})
+        self.ws = ws
+        self.tables_row = 1
+        self.commit = commit
+
+        tables_row = None
+        for i in range(1, ws.max_row + 1):
+            value = ws[f'A{i}'].value
+            if value is not None:
+                tables_row = i
+                break
+
+        if tables_row is not None:
+            self.tables_row = tables_row
+            table_name = None
+
+            for i in range(1, ws.max_column + 1):
+
+                value = ws.cell(row=tables_row+1, column=i).value
+
+                if table_name is None and value is not None:
+                    table_name = value
+                    first_column = i
+                    continue
+
+                if table_name is not None and (value is None or i == ws.max_column):
+
+                    table_name = None
+                    last_column = i - 1 if value is None else i
+
+                    for j in range(tables_row, ws.max_row + 1):
+
+                        value = ws.cell(row=j, column=first_column).value
+
+                        if table_name is None and value is not None:
+                            table_name = value
+                            continue
+
+                        if table_name is not None and (value is None or j == ws.max_row):
+                            last_row = j - 1 if value is None else j
+                            table = Worktable(table_name, self, ws, tables_row, last_row, first_column, last_column, commit)
+                            self.tables[table_name] = table
+                            table_name = None
+                            break
+
+                    continue
+
+
+    def get_table(self, name):
+        if self.tables.get(name) is None:
+
+            first_column = None
+
+            for i in range(1, self.ws.max_column + 1):
+
+                value = self.ws.cell(row=2, column=i).value
+
+                if value is not None:
+                    first_column = i
+
+            if first_column is None:
+                first_column = 1
+            else:
+                first_column += 2
+
+            self.ws.cell(row=self.tables_row, column=first_column, value=name)
+
+            rows = ['Commit', 'Date', 'Value', 'Comments']
+
+            self.tables[name] = Worktable(name, self, self.ws,
+                self.tables_row, self.tables_row + 1,
+                first_column, first_column+len(rows)-1,
+                self.commit)
+
+            for i, cell_name in enumerate(rows):
+                self.ws.cell(row=self.tables_row+1, column=first_column+i, value=cell_name)
+
+        return self.tables.get(name)
+
+    def __str__(self):
+        result = ''
+        for name, table in self.tables.items():
+            result += f'Table {name}\n  '
+            result += str(table)
+            result += '\n'
+
+        return result
+
+class Workbook():
+
+    def __init__(self, desc):
+
+        info, filename = desc.split('@')
+        sheetname, commit = info.split(':')
+
+        self.wb = openpyxl.load_workbook(filename)
+        self.sheets = {}
+        self.filename = filename
+        self.sheetname = sheetname
+
+        for name in self.wb.sheetnames:
+            self.sheets[name] = Worksheet(name, self.wb[name], commit)
+
+    def get_sheet(self, name=None):
+        if name is None:
+            name = self.sheetname
+        return self.sheets[name]
+
+    def save(self):
+        self.wb.save(filename=self.filename)
+
+    def __str__(self):
+        result = ''
+        for name, sheet in self.sheets.items():
+            result += f'Sheet {name}\n'
+            result += str(sheet)
+            result += '\n'
+        return result
 
 def run_done():
     runner.plpobjects.dumpTestsToConsole()
@@ -80,8 +228,12 @@ def score(tests):
   table.float_format='.3'
   table.align = "l"
 
+  workbook = None
+  if args.workbook is not None:
+    workbook = Workbook(args.workbook)
+
   for testset in tests:
-    (test_error, test_score, test_nb_score) = testset.score(table=table, score_name=args.score_name)
+    (test_error, test_score, test_nb_score) = testset.score(table=table, score_name=args.score_name, workbook=workbook)
 
     error = error or test_error
 
@@ -97,6 +249,9 @@ def score(tests):
   print ('\nFinal score: %f' % score)
 
   runner.command_done()
+
+  if args.workbook is not None:
+    workbook.save()
 
   return error
 
@@ -143,7 +298,9 @@ parser.add_argument("--max-timeout", dest="maxTimeout", default="3600", help="Se
 parser.add_argument("--db", dest="db", action='store_true', default=False, help="Activate Pulp database access")
 parser.add_argument("--worker-pool", dest="worker_pool", default=None, help="Specify worker pool")
 parser.add_argument("--score-csv-file", dest="score_csv_file", default=None, help="Specify CSV file for scores")
+parser.add_argument("--workbook", dest="workbook", default=None, help="Specify workbook")
 parser.add_argument("--score-name", dest="score_name", default='score', help="Specify name for scores")
+parser.add_argument("--config", dest="config", default='default', help="Specify config name")
 parser.add_argument("--bench-csv-file", dest="bench_csv_file", default=None, help="Specify CSV file for benchmark results")
 parser.add_argument("--job-id", dest="job_id", default=0, type=int, help="Give the job ID when the testset is split into several jobs")
 parser.add_argument("--nb-jobs", dest="nb_jobs", default=1, type=int, help="Give the number of jobs when the testset is split into several jobs")
@@ -209,7 +366,7 @@ for testset in args.testset:
   runner.addTestset(testset)
 
 
-runner.addConfig("default")
+runner.addConfig(args.config)
 # if args.config_name is None:
 #   for config in plpconf.get_configs_from_env():
 #     print (config)
