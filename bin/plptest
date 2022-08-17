@@ -273,8 +273,6 @@ parser = argparse.ArgumentParser(description='Run a testset',epilog=commandHelp,
 parser.add_argument('command', metavar='CMD', type=str, nargs='*',
                    help='a command to be executed (see the command help afterwards)')
 
-parser.add_argument("--config", dest="config_name", default=None, help="specify the system configuration name")
-
 parser.add_argument("--config-def", dest="configDef", action="append", default=None, help="Specifies json files containing configurations definition")
 parser.add_argument("--property", dest="properties", action="append", default=[], help="Specifies property")
 parser.add_argument("--tag", dest="tags", action="append", default=[], help="Specifies tag")
