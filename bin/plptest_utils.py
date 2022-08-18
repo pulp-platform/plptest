@@ -414,12 +414,9 @@ class Testset(TestCommon):
             if workbook is not None:
 
                 ws = workbook.get_sheet()
-                print (ws)
-                table_name = self.getFullName()
+                table_name = self.getFullName() + f'.{score_name}'
                 table = ws.get_table(table_name)
-                print (ws)
                 table.add(score)
-                print (ws)
 
             return (error, score, 1)
 
@@ -541,7 +538,7 @@ class Test(TestCommon):
             if workbook is not None:
 
                 ws = workbook.get_sheet()
-                table_name = self.getFullName()
+                table_name = self.getFullName() + f'{score_name}'
                 table = ws.get_table(table_name)
                 table.add(total_score)
 
