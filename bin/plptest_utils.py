@@ -250,11 +250,25 @@ class TestCommon(object):
 
         return None
 
+    def check_tags(self, tags):
+        if self.parent:
+            if self.parent.check_tags(tags):
+                return True
+
+        if self.user is None:
+            return True
+        else:
+            return len(set(tags).intersection(self.user.tags)) != 0
+
     def checkConfig(self, config):
-        if not self.is_testset and len(self.runner.tags) != 0 and self.user is not None:
-            self.isActive = len(set(self.runner.tags).intersection(self.user.tags)) != 0
+        if not self.is_testset and len(self.runner.tags) != 0:
+            self.isActive = self.check_tags(self.runner.tags)
             if not self.isActive:
                 return
+        # if not self.is_testset and len(self.runner.tags) != 0 and self.user is not None:
+        #     self.isActive = len(set(self.runner.tags).intersection(self.user.tags)) != 0
+        #     if not self.isActive:
+        #         return
         else:
             self.isActive = True
 

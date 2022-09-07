@@ -108,6 +108,9 @@ class Sdk_testset(Testset):
         config.add_testset(self)
 
 
+    def add_tags(self, tags):
+        self.tags += tags
+
 
 class Sdk_test(Test):
 
