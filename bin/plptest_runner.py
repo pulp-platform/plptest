@@ -452,7 +452,7 @@ class TestRunner(object):
       self.pendings.append(testrun)
 
     def cpu_load_check(self):
-      self.cpu_load_checker_call_id = reactor.callLater(1, self.cpu_load_check)
+      self.cpu_load_checker_call_id = reactor.callLater(0.1, self.cpu_load_check)
 
       self.check_pending_tests()
 
