@@ -143,7 +143,8 @@ class Sdk_test(Test):
             ]
           else:
             commands += [
-              Shell('build', 'make build image %s' % (flags)),
+              Shell('build', 'make build %s' % (flags)),
+              Shell('build', 'make image %s' % (flags)),
             ]
             commands.append(Shell('run',   'make %s' % run))
 
