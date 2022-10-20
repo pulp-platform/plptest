@@ -137,13 +137,14 @@ class Sdk_test(Test):
           if gen is not None:
             commands.append(Shell('gen', 'make %s %s' % (gen, flags)))
 
-          commands += [
-            Shell('build', 'make build image %s' % (flags)),
-          ]
-
           if run is None:
-            commands.append(Shell('run',   'make flash_noforce exec %s' % (flags)))
+            commands += [
+              Shell('all', 'make run %s' % (flags)),
+            ]
           else:
+            commands += [
+              Shell('build', 'make build image %s' % (flags)),
+            ]
             commands.append(Shell('run',   'make %s' % run))
 
           if check is not None:
